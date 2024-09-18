@@ -1,6 +1,6 @@
 ﻿# Ohke_Kalastus
 
-työkalut: Python, Flask, React, MySql, VS Code, Trello
+työkalut: C#, Blazor, Javascript, MySql, VS Code, Trello
 
 roolit: Scrum master Mari, Tuoteomistaja Iisakki, Kehittäjät Ville ja Eetu
 
