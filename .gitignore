@@ -13,8 +13,6 @@ node_modules/
 # Include .NET Core dependencies directory
 **/obj/
 **/bin/
-# Ignore publish output
-**/wwwroot/
 
 # Ignore temporary files
 *.swp
