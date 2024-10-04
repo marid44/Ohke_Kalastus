@@ -1,0 +1,29 @@
+@page "/register"
+
+<PageTitle>Rekisteröidy</PageTitle>
+
+<style>
+    .login-container {
+        text-align: center;
+        font-weight: lighter;
+        font-family: 'Courier New', Courier, monospace;
+        margin-bottom: 20px;
+    }
+</style>
+
+
+
+<body>
+    <div class="login-container">
+        <h2>Rekisteröidy</h2>
+        <form action="/login" method="post">
+            <label for="name">Käyttäjänimi</label>
+            <input type="name" id="name" name="name" required>
+            <label for="email">Sähköposti</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">Salasana</label>
+            <input type="password" id="password" name="password" required>
+            <input type="submit" value="Kirjaudu">
+        </form>
+    </div>
+</body>
