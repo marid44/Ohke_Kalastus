@@ -1,10 +1,12 @@
 @page "/login"
 @using KalastusWebsite.Data
 @using KalastusWebsite.Models
+@using KalastusWebsite.Services
 @using Microsoft.EntityFrameworkCore
 @inject AppDbContext _context
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserSession UserSession
 
 <h3>Kirjaudu</h3>
 
@@ -37,6 +39,9 @@
         if (user != null && BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
         {
             loginError = null;
+
+            UserSession.Username = user.Username;
+            UserSession.IsLoggedIn = true;
 
             NavigationManager.NavigateTo("/");
         }

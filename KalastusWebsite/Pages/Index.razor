@@ -1,6 +1,12 @@
 ﻿@page "/"
+@using KalastusWebsite.Services
+@inject UserSession UserSession
+
 
 <PageTitle>Kalastajien yhteisö</PageTitle>
+
+
+
 
 @code {
     // Navigation methods
@@ -31,7 +37,14 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <h1>Tervetuloa kalastajien yhteisöön</h1>
+            @if (UserSession.IsLoggedIn)
+            {
+                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön, @UserSession.Username!</h2>
+            }
+            else
+            {
+                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön!</h2>
+            }
         </div>
     </div>
 </div>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using KalastusWebsite.Data;
+using KalastusWebsite.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseSqlite("Data Source=app.db"));
+builder.Services.AddSingleton<UserSession>();
+
 
 var app = builder.Build();
 
