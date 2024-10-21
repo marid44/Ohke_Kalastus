@@ -26,6 +26,9 @@
 
     private async Task HandleValidSubmit()
     {
+        // Hash the password
+        newUser.Password = BCrypt.Net.BCrypt.HashPassword(newUser.Password);
+
         // Add the new user to the database
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
