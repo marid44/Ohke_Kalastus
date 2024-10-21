@@ -3,13 +3,10 @@
 <PageTitle>KalastusWebsite</PageTitle>
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
     <main>
         <div class="top-row px-4">
             <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            <button class="btn btn-link" @onclick="NavigateToHome">Home</button>
         </div>
 
         <article class="content px-4">
@@ -17,3 +14,13 @@
         </article>
     </main>
 </div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
+    // Method to navigate to the Home/Index page
+    private void NavigateToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

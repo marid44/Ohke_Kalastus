@@ -2,6 +2,31 @@
 
 <PageTitle>Kalastajien yhteisö</PageTitle>
 
+@code {
+    // Navigation methods
+    private void NavigateToCreateDiscussion()
+    {
+        NavigationManager.NavigateTo("/create-discussion");
+    }
+
+    private void NavigateToDiscussions()
+    {
+        NavigationManager.NavigateTo("/discussions");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/add-user");
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    [Inject] private NavigationManager NavigationManager { get; set; }
+}
+
 
 <div class="container">
     <div class="row">
@@ -23,7 +48,7 @@
 <div class="kirjautuminen">
     <div class="row">
         <div class="col">
-            <button class="btn btn-primary">Rekisteröidy</button>
+            <button class="btn btn-primary" @onclick="NavigateToRegister">Rekisteröidy</button>
             <button class="btn btn-primary">Kirjaudu</button>
         </div>
     </div>

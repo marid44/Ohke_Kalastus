@@ -3,22 +3,22 @@
 @using KalastusWebsite.Models
 @inject AppDbContext _context
 
-<h3>Add New User</h3>
+<h3>Rekisteröidy</h3>
 
 <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
     <div>
-        <label>Username:</label>
+        <label>Käyttäjänimi:</label>
         <InputText @bind-Value="newUser.Username" />
     </div>
     <div>
-        <label>Email:</label>
+        <label>Sähköposti:</label>
         <InputText @bind-Value="newUser.Email" />
     </div>
     <div>
-        <label>Password:</label>
+        <label>Salasana:</label>
         <InputText @bind-Value="newUser.Password" type="password" />
     </div>
-    <button type="submit">Add User</button>
+    <button type="submit">Rekisteröidy</button>
 </EditForm>
 
 @code {
