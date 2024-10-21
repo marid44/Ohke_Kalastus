@@ -1,0 +1,36 @@
+@page "/add-user"
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+
+<h3>Add New User</h3>
+
+<EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+    <div>
+        <label>Username:</label>
+        <InputText @bind-Value="newUser.Username" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="newUser.Email" />
+    </div>
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="newUser.Password" type="password" />
+    </div>
+    <button type="submit">Add User</button>
+</EditForm>
+
+@code {
+    private User newUser = new User();
+
+    private async Task HandleValidSubmit()
+    {
+        // Add the new user to the database
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
+
+        // Clear form
+        newUser = new User();
+    }
+}
