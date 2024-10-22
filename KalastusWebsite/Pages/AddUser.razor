@@ -2,23 +2,29 @@
 @using KalastusWebsite.Data
 @using KalastusWebsite.Models
 @inject AppDbContext _context
+@inject NavigationManager NavigationManager
 
 <h3>Rekisteröidy</h3>
 
 <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
     <div>
         <label>Käyttäjänimi:</label>
-        <InputText @bind-Value="newUser.Username" />
+        <InputText @bind-Value="newUser.Username" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Username)" />
     </div>
     <div>
         <label>Sähköposti:</label>
-        <InputText @bind-Value="newUser.Email" />
+        <InputText @bind-Value="newUser.Email" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Email)" />
     </div>
     <div>
         <label>Salasana:</label>
-        <InputText @bind-Value="newUser.Password" type="password" />
+        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
+        <ValidationMessage For="@(() => newUser.Password)" />
     </div>
-    <button type="submit">Rekisteröidy</button>
+    <button class="btn btn-primary" type="submit">Register</button>
 </EditForm>
 
 @code {
@@ -35,5 +41,6 @@
 
         // Clear form
         newUser = new User();
+        NavigationManager.NavigateTo("/login");
     }
 }
