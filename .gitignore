@@ -64,4 +64,9 @@ Icon?
 ._*
 
 # Linux specific files
-*~
+*
+
+# Database
+*.db
+*.db-shm
+*.db-wal
