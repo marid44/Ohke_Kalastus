@@ -2,13 +2,10 @@
 @using KalastusWebsite.Services
 @inject UserSession UserSession
 
-
 <PageTitle>Kalastajien yhteisö</PageTitle>
 
-
-
-
 @code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
     // Navigation methods
     private void NavigateToCreateDiscussion()
     {
@@ -30,7 +27,7 @@
         NavigationManager.NavigateTo("/login");
     }
 
-    [Inject] private NavigationManager NavigationManager { get; set; }
+
 }
 
 
@@ -88,6 +85,7 @@
 <style>
     .container {
         text-align: center;
+
         font-weight: lighter;
         font-family: 'Courier New', Courier, monospace;
         background-color: #788680;
