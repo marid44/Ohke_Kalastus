@@ -1,0 +1,59 @@
+@page "/login"
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@using KalastusWebsite.Services
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserSession UserSession
+
+<h3>Kirjaudu</h3>
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <div class="form-group">
+        <label for="email">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="loginModel.Email" />
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+    </div>
+    <button class="btn btn-primary" type="submit">Login</button>
+</EditForm>
+
+@if (loginError != null)
+{
+    <div class="alert alert-danger">@loginError</div>
+}
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string? loginError;
+
+    private async Task HandleLogin()
+    {
+        var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
+
+        if (user != null && BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
+        {
+            loginError = null;
+
+            UserSession.Username = user.Username;
+            UserSession.IsLoggedIn = true;
+
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            loginError = "Invalid email or password";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+}

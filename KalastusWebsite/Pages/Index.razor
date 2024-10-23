@@ -1,0 +1,94 @@
+﻿@page "/"
+@using KalastusWebsite.Services
+@inject UserSession UserSession
+
+<PageTitle>Kalastajien yhteisö</PageTitle>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
+    // Navigation methods
+    private void NavigateToCreateDiscussion()
+    {
+        NavigationManager.NavigateTo("/create-discussion");
+    }
+
+    private void NavigateToDiscussions()
+    {
+        NavigationManager.NavigateTo("/discussions");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/add-user");
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+
+}
+
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            @if (UserSession.IsLoggedIn)
+            {
+                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön, @UserSession.Username!</h2>
+            }
+            else
+            {
+                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön!</h2>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="keskustelu">
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary">Luo uusi keskustelu</button>
+            <button class="btn btn-primary">Keskustelut</button>
+        </div>
+    </div>
+</div>
+
+<div class="kirjautuminen">
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" @onclick="NavigateToRegister">Rekisteröidy</button>
+            <button class="btn btn-primary" @onclick="NavigateToLogin">Kirjaudu</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .keskustelu {
+        text-align: center;
+        font-weight: lighter;
+        font-family: 'Courier New', Courier, monospace;
+        margin-bottom: 20px;
+    }
+</style>
+
+<style>
+    .kirjautuminen {
+        text-align: center;
+        font-weight: lighter;
+        font-family: 'Courier New', Courier, monospace;
+        margin-bottom: 20px;
+    }
+</style>
+
+<style>
+    .container {
+        text-align: center;
+
+        font-weight: lighter;
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #788680;
+        margin-bottom: 20px;
+    }
+</style>

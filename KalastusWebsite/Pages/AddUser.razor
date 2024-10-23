@@ -1,0 +1,46 @@
+@page "/add-user"
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+
+<h3>Rekisteröidy</h3>
+
+<EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div>
+        <label>Käyttäjänimi:</label>
+        <InputText @bind-Value="newUser.Username" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Username)" />
+    </div>
+    <div>
+        <label>Sähköposti:</label>
+        <InputText @bind-Value="newUser.Email" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Email)" />
+    </div>
+    <div>
+        <label>Salasana:</label>
+        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
+        <ValidationMessage For="@(() => newUser.Password)" />
+    </div>
+    <button class="btn btn-primary" type="submit">Register</button>
+</EditForm>
+
+@code {
+    private User newUser = new User();
+
+    private async Task HandleValidSubmit()
+    {
+        // Hash the password
+        newUser.Password = BCrypt.Net.BCrypt.HashPassword(newUser.Password);
+
+        // Add the new user to the database
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
+
+        // Clear form
+        newUser = new User();
+        NavigationManager.NavigateTo("/login");
+    }
+}
