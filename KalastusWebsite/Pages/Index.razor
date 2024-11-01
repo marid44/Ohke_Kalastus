@@ -9,12 +9,21 @@
     // Navigation methods
     private void NavigateToCreateDiscussion()
     {
-        NavigationManager.NavigateTo("/create-discussion");
+        if (UserSession.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo("/add-conversation");
+        }
+        else
+        {
+            // Set the intended redirect URL and navigate to login
+            UserSession.RedirectUrl = "/add-conversation";
+            NavigationManager.NavigateTo("/login");
+        }
     }
 
     private void NavigateToDiscussions()
     {
-        NavigationManager.NavigateTo("/discussions");
+        NavigationManager.NavigateTo("/conversations");
     }
 
     private void NavigateToRegister()
@@ -46,11 +55,13 @@
     </div>
 </div>
 
+
+
 <div class="keskustelu">
     <div class="row">
         <div class="col">
-            <button class="btn btn-primary">Luo uusi keskustelu</button>
-            <button class="btn btn-primary">Keskustelut</button>
+            <button class="btn btn-primary" @onclick="NavigateToCreateDiscussion">Luo uusi keskustelu</button>
+            <button class="btn btn-primary" @onclick="NavigateToDiscussions">Keskustelut</button>
         </div>
     </div>
 </div>

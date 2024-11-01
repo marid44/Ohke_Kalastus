@@ -1,0 +1,36 @@
+@page "/conversations"
+@using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@using Microsoft.EntityFrameworkCore
+
+<h3>All Conversations</h3>
+
+@if (conversations != null && conversations.Any())
+{
+    <ul>
+        @foreach (var conversation in conversations)
+        {
+            <li>
+                <h4>@conversation.Title</h4>
+                <p>@conversation.Content</p>
+                <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No conversations available.</p>
+}
+
+@code {
+    private List<Conversation> conversations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all conversations from the database
+        conversations = await _context.Conversations.OrderByDescending(c => c.CreatedAt).ToListAsync();
+    }
+}
