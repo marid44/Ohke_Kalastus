@@ -39,15 +39,12 @@ else
 
     private async Task HandleValidSubmit()
     {
-        // Populate the conversation's username from the UserSession
         newConversation.Username = UserSession.Username;
         newConversation.CreatedAt = DateTime.Now;
 
-        // Save the new conversation to the database
         _context.Conversations.Add(newConversation);
         await _context.SaveChangesAsync();
 
-        // Redirect to a conversations page or reset the form
         newConversation = new Conversation();
         NavigationManager.NavigateTo("/conversations");
     }

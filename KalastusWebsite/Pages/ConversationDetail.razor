@@ -1,0 +1,49 @@
+@page "/conversation/{id:int}"
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; } // This will receive the conversation ID from the URL
+
+    private Conversation? conversation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the conversation from the database using the ID
+        conversation = await _context.Conversations.FindAsync(Id);
+
+        if (conversation == null)
+        {
+            // If the conversation is not found, navigate back to conversations list
+            NavigationManager.NavigateTo("/conversations");
+        }
+    }
+}
+
+@if (conversation != null)
+{
+    <div class="conversation-detail">
+        <h2>@conversation.Title</h2>
+        <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
+        <p>@conversation.Content</p>
+    </div>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+<style>
+    .conversation-detail {
+        padding: 20px;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 20px auto;
+    }
+</style>
