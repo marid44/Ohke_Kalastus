@@ -1,26 +1,65 @@
 @page "/conversation/{id:int}"
 @using KalastusWebsite.Data
 @using KalastusWebsite.Models
+@using KalastusWebsite.Services
+@using Microsoft.EntityFrameworkCore
 @inject AppDbContext _context
 @inject NavigationManager NavigationManager
-
+@inject UserSession UserSession
 
 @code {
     [Parameter]
     public int Id { get; set; } // This will receive the conversation ID from the URL
 
     private Conversation? conversation;
+    private List<Comment> comments = new List<Comment>();
+    private string newCommentText = string.Empty;
+    private string? commentError;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the conversation from the database using the ID
+        // Fetch the conversation and associated comments
         conversation = await _context.Conversations.FindAsync(Id);
 
-        if (conversation == null)
+        if (conversation != null)
         {
-            // If the conversation is not found, navigate back to conversations list
+            comments = await _context.Comments
+            .Where(c => c.ConversationId == conversation.Id)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync();
+        }
+        else
+        {
+            // Redirect if conversation is not found
             NavigationManager.NavigateTo("/conversations");
         }
+    }
+
+    private async Task AddComment()
+    {
+        if (string.IsNullOrWhiteSpace(newCommentText))
+        {
+            commentError = "Comment cannot be empty.";
+            return;
+        }
+
+        // Create a new comment
+        var newComment = new Comment
+            {
+                ConversationId = conversation.Id,
+                Text = newCommentText,
+                Username = UserSession.Username,
+                CreatedAt = DateTime.Now
+            };
+
+        // Add and save to the database
+        _context.Comments.Add(newComment);
+        await _context.SaveChangesAsync();
+
+        // Clear the form and refresh comments
+        newCommentText = string.Empty;
+        commentError = null;
+        comments.Add(newComment);
     }
 }
 
@@ -31,6 +70,46 @@
         <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
         <p>@conversation.Content</p>
     </div>
+
+    <h4>Comments</h4>
+
+    @if (comments.Any())
+    {
+        <div class="comments-section">
+            @foreach (var comment in comments)
+            {
+                <div class="comment">
+                    <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
+                    <p>@comment.Text</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No comments yet. Be the first to comment!</p>
+    }
+
+    @if (UserSession.IsLoggedIn)
+    {
+        <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
+            <div class="form-group">
+                <label for="newComment">Add a comment:</label>
+                <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
+                <ValidationMessage For="@(() => newCommentText)" />
+            </div>
+            <button class="btn btn-primary" type="submit">Post Comment</button>
+        </EditForm>
+
+        @if (commentError != null)
+        {
+            <p style="color: red;">@commentError</p>
+        }
+    }
+    else
+    {
+        <p>Please log in to post a comment.</p>
+    }
 }
 else
 {
@@ -45,5 +124,17 @@ else
         border-radius: 8px;
         max-width: 600px;
         margin: 20px auto;
+    }
+
+    .comments-section {
+        margin-top: 20px;
+    }
+
+    .comment {
+        padding: 10px;
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 10px;
     }
 </style>

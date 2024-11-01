@@ -6,7 +6,7 @@
 @inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
 
-<h3>All Conversations</h3>
+<h3>Kaikki Keskustelut</h3>
 
 @if (conversations != null && conversations.Any())
 {
@@ -15,7 +15,7 @@
         {
             <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
                 <h4>@conversation.Title</h4>
-                <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
+                <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt</small></p>
                 <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." : conversation.Content)
                 </p>
             </div>
