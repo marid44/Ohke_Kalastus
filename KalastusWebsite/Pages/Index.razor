@@ -2,19 +2,27 @@
 @using KalastusWebsite.Services
 @inject UserSession UserSession
 
-<PageTitle>Kalastajien yhteisö</PageTitle>
+<PageTitle>Kalastajien Yhteisö</PageTitle>
 
 @code {
     [Inject] private NavigationManager NavigationManager { get; set; }
-    // Navigation methods
+
     private void NavigateToCreateDiscussion()
     {
-        NavigationManager.NavigateTo("/create-discussion");
+        if (UserSession.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo("/add-conversation");
+        }
+        else
+        {
+            UserSession.RedirectUrl = "/add-conversation";
+            NavigationManager.NavigateTo("/login");
+        }
     }
 
     private void NavigateToDiscussions()
     {
-        NavigationManager.NavigateTo("/discussions");
+        NavigationManager.NavigateTo("/conversations");
     }
 
     private void NavigateToRegister()
@@ -22,73 +30,147 @@
         NavigationManager.NavigateTo("/add-user");
     }
 
-    private void NavigateToLogin()
-    {
-        NavigationManager.NavigateTo("/login");
-    }
-
 
 }
 
+<div class="hero">
+    <h1>Kalastajien yhteisö</h1>
+    @if (!UserSession.IsLoggedIn)
+    {
+        <p>Liity jäseneksi, jaa kokemuksiasi, ja keskustele muiden kalastajien kanssa!.</p>
+        <button class="hero-btn" @onclick="NavigateToRegister">Liity yhteisöön</button>
+    }
+</div>
 
 <div class="container">
-    <div class="row">
-        <div class="col">
-            @if (UserSession.IsLoggedIn)
-            {
-                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön, @UserSession.Username!</h2>
-            }
-            else
-            {
-                <h2 style="text-align: center;">Tervetuloa kalastajien yhteisöön!</h2>
-            }
-        </div>
+    <div class="welcome-message">
+        @if (UserSession.IsLoggedIn)
+        {
+            <h2>Terve, @UserSession.Username!</h2>
+        }
+        else
+        {
+            <h2>Tervetuloa!</h2>
+        }
     </div>
-</div>
 
-<div class="keskustelu">
-    <div class="row">
-        <div class="col">
-            <button class="btn btn-primary">Luo uusi keskustelu</button>
-            <button class="btn btn-primary">Keskustelut</button>
-        </div>
-    </div>
-</div>
-
-<div class="kirjautuminen">
-    <div class="row">
-        <div class="col">
-            <button class="btn btn-primary" @onclick="NavigateToRegister">Rekisteröidy</button>
-            <button class="btn btn-primary" @onclick="NavigateToLogin">Kirjaudu</button>
-        </div>
+    <div class="action-buttons">
+        <button class="btn-primary" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
+        <button class="btn-primary" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
     </div>
 </div>
 
 <style>
-    .keskustelu {
+    /* Hero Section */
+    .hero {
+        background-image: url('/kalastus banner.jpg');
+        background-size: cover;
+        background-position: center;
         text-align: center;
-        font-weight: lighter;
-        font-family: 'Courier New', Courier, monospace;
+        padding: 80px 20px;
+        color: rgb(255, 255, 255);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        position: relative;
+        /* To position the overlay */
+        z-index: 1;
+        /* Ensure the text stays above the overlay */
+    }
+
+    .hero::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.3);
+        /* Adjust opacity for darkness */
+        border-radius: 10px;
+        z-index: -1;
+        /* Keep the overlay behind the text */
+    }
+
+
+    .hero h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+
+    }
+
+    .hero p {
+        font-size: 1.2em;
         margin-bottom: 20px;
     }
-</style>
 
-<style>
-    .kirjautuminen {
-        text-align: center;
-        font-weight: lighter;
-        font-family: 'Courier New', Courier, monospace;
-        margin-bottom: 20px;
+    .hero-btn {
+        padding: 12px 24px;
+        font-size: 1.1em;
+        color: #fff;
+        background-color: #298d53;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
     }
-</style>
 
-<style>
+    .hero-btn:hover {
+        background-color: #86b393;
+    }
+
+    /* Container Styling */
     .container {
         text-align: center;
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-        font-weight: lighter;
-        font-family: 'Courier New', Courier, monospace;
-        background-color: #788680;
-        margin-bottom: 20px;
+    .welcome-message h2 {
+        color: #333;
+    }
+
+    /* Button Styles */
+    .btn-primary {
+        background-color: #4b786d;
+        color: white;
+        padding: 10px 20px;
+        font-size: 1em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin: 10px;
+    }
+
+    .btn-primary:hover {
+        background-color: #353934;
+    }
+
+    .btn-secondary {
+        background-color: #333;
+        color: white;
+        padding: 10px 20px;
+        font-size: 1em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin: 10px;
+    }
+
+    .btn-secondary:hover {
+        background-color: #555;
+    }
+
+    /* Additional Sections */
+    .action-buttons,
+    .auth-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
     }
 </style>

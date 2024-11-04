@@ -10,7 +10,7 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div>
-        <label>Käyttäjänimi:</label>
+        <label>Käyttäjänimi (näyttönimi):</label>
         <InputText @bind-Value="newUser.Username" class="form-control" />
         <ValidationMessage For="@(() => newUser.Username)" />
     </div>

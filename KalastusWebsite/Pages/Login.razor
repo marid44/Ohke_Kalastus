@@ -5,7 +5,6 @@
 @using Microsoft.EntityFrameworkCore
 @inject AppDbContext _context
 @inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserSession UserSession
 
 <h3>Kirjaudu</h3>
@@ -43,7 +42,18 @@
             UserSession.Username = user.Username;
             UserSession.IsLoggedIn = true;
 
-            NavigationManager.NavigateTo("/");
+            // Check if there's a redirect URL set in UserSession
+            if (!string.IsNullOrEmpty(UserSession.RedirectUrl))
+            {
+                // Redirect to the stored URL and clear it
+                NavigationManager.NavigateTo(UserSession.RedirectUrl);
+                UserSession.RedirectUrl = null; // Clear the redirect URL after navigating
+            }
+            else
+            {
+                // Default redirect if no intended URL
+                NavigationManager.NavigateTo("/");
+            }
         }
         else
         {
@@ -53,7 +63,7 @@
 
     public class LoginModel
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

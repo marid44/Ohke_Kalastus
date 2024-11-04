@@ -6,19 +6,22 @@
 <div class="page">
     <main>
         <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-            <button class="btn btn-link" @onclick="NavigateToHome">Home</button>
+            <button class="btn btn-link" @onclick="NavigateToHome" style="margin-right: auto;">Etusivu</button>
 
             @if (UserSession.IsLoggedIn)
             {
-                <button class="btn btn-link" @onclick="Logout">Logout</button>
+                <button class="btn btn-link" @onclick="Logout">Kirjaudu ulos</button>
+            }
+            @if (!UserSession.IsLoggedIn)
+            {
+                <button class="btn btn-link" @onclick="NavigateToRegister">Rekisteröidy</button>
+                <button class="btn btn-link" @onclick="NavigateToLogin">Kirjaudu</button>
             }
         </div>
 
         <article class="content px-4">
             @Body
         </article>
-
     </main>
 
     <div class="sidebar">
@@ -44,6 +47,16 @@
         UserSession.IsLoggedIn = false;
 
         // Redirect to home or login page
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/add-user");
+    }
+
+    private void NavigateToLogin()
+    {
         NavigationManager.NavigateTo("/login");
     }
 }

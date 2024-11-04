@@ -63,8 +63,6 @@ $RECYCLE.BIN/
 Icon?
 ._*
 
-# Linux specific files
-*
 
 # Database
 *.db

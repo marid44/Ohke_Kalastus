@@ -1,0 +1,74 @@
+@page "/conversations"
+@using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<h3>Kaikki Keskustelut</h3>
+
+@if (conversations != null && conversations.Any())
+{
+    <div class="conversation-list">
+        @foreach (var conversation in conversations)
+        {
+            <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
+                <h4>@conversation.Title</h4>
+                <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt</small></p>
+                <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." : conversation.Content)
+                </p>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No conversations available.</p>
+}
+
+@code {
+    private List<Conversation> conversations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all conversations from the database
+        conversations = await _context.Conversations.OrderByDescending(c => c.CreatedAt).ToListAsync();
+    }
+
+    private void NavigateToConversation(int conversationId)
+    {
+        // Navigate to the specific conversation page
+        NavigationManager.NavigateTo($"/conversation/{conversationId}");
+    }
+}
+
+<style>
+    .conversation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .conversation-box {
+        padding: 15px;
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .conversation-box:hover {
+        background-color: #e0e0e0;
+    }
+
+    .conversation-box h4 {
+        margin: 0;
+    }
+
+    .conversation-box p {
+        margin: 5px 0;
+        color: #666;
+    }
+</style>

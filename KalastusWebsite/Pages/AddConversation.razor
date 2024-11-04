@@ -1,0 +1,51 @@
+@page "/add-conversation"
+@using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+@inject UserSession UserSession
+
+<h3>Luo keskustelu</h3>
+
+@if (UserSession.IsLoggedIn)
+{
+    <EditForm Model="newConversation" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <InputText id="title" @bind-Value="newConversation.Title" class="form-control" />
+            <ValidationMessage For="@(() => newConversation.Title)" />
+        </div>
+
+        <div class="form-group">
+            <label for="content">Content:</label>
+            <InputTextArea id="content" @bind-Value="newConversation.Content" class="form-control" />
+            <ValidationMessage For="@(() => newConversation.Content)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Post Conversation</button>
+    </EditForm>
+}
+else
+{
+    <p>You need to log in to add a new conversation.</p>
+}
+
+@code {
+    private Conversation newConversation = new Conversation();
+
+    private async Task HandleValidSubmit()
+    {
+        newConversation.Username = UserSession.Username;
+        newConversation.CreatedAt = DateTime.Now;
+
+        _context.Conversations.Add(newConversation);
+        await _context.SaveChangesAsync();
+
+        newConversation = new Conversation();
+        NavigationManager.NavigateTo("/conversations");
+    }
+}
