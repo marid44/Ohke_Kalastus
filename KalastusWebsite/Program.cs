@@ -18,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
 
+
 // Configure Kestrel to allow large file uploads
 builder.WebHost.ConfigureKestrel(options =>
 {
