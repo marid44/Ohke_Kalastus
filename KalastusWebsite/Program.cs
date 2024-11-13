@@ -17,6 +17,15 @@ builder.Services.AddSingleton<UserSession>();
 builder.Services.AddControllers();  // Controllers.API
 
 
+<<<<<<< HEAD
+=======
+
+// Configure Kestrel to allow large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 1024 * 1024 * 1024; // 1 GB
+});
+>>>>>>> 7a02508 (Tapahtumat, toimii)
 
 var app = builder.Build();
 
