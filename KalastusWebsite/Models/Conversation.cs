@@ -22,4 +22,22 @@ namespace KalastusWebsite.Models
         // Lista kommenteista, jotka liittyvät keskusteluun
         public List<Comment> Comments { get; set; } = new();
     }
+    public class Comment1
+    {
+        public int Id { get; set; }
+
+        [Required]
+        public int ConversationId { get; set; } // Foreign key to Conversation
+
+        [Required]
+        [StringLength(500, ErrorMessage = "Comment cannot exceed 500 characters.")]
+        public string Text { get; set; }
+
+        public string Username { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    }
+
 }
+
+
+
