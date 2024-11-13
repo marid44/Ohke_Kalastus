@@ -7,14 +7,16 @@ using KalastusWebsite.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents();
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 1920 * 1080 * 200; // Asetetaan maksimi tiedostokooksi 1000 MB
+    });
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlite("Data Source=app.db"));
+    options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
-
 
 var app = builder.Build();
 

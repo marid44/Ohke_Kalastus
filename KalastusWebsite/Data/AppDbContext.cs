@@ -10,7 +10,9 @@ namespace KalastusWebsite.Data
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Media> MediaFiles { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+
     }
 }

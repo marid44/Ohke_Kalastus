@@ -9,28 +9,37 @@
 
 @code {
     [Parameter]
-    public int Id { get; set; } // This will receive the conversation ID from the URL
+    public int Id { get; set; } // Conversation ID from URL
 
     private Conversation? conversation;
-    private List<Comment> comments = new List<Comment>();
+    private List<Comment> comments = new();
     private string newCommentText = string.Empty;
     private string? commentError;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the conversation and associated comments
-        conversation = await _context.Conversations.FindAsync(Id);
+        try
+        {
+            // Fetch the conversation and associated comments
+            conversation = await _context.Conversations
+            .Include(c => c.Comments)
+            .FirstOrDefaultAsync(c => c.Id == Id);
 
-        if (conversation != null)
-        {
-            comments = await _context.Comments
-            .Where(c => c.ConversationId == conversation.Id)
-            .OrderBy(c => c.CreatedAt)
-            .ToListAsync();
+            if (conversation != null)
+            {
+                comments = conversation.Comments
+                .OrderBy(c => c.CreatedAt)
+                .ToList();
+            }
+            else
+            {
+                // Redirect if conversation is not found
+                NavigationManager.NavigateTo("/conversations");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // Redirect if conversation is not found
+            Console.WriteLine($"Error loading conversation: {ex.Message}");
             NavigationManager.NavigateTo("/conversations");
         }
     }
@@ -43,23 +52,37 @@
             return;
         }
 
-        // Create a new comment
-        var newComment = new Comment
-            {
-                ConversationId = conversation.Id,
-                Text = newCommentText,
-                Username = UserSession.Username,
-                CreatedAt = DateTime.Now
-            };
+        if (conversation == null)
+        {
+            commentError = "Conversation not found.";
+            return;
+        }
 
-        // Add and save to the database
-        _context.Comments.Add(newComment);
-        await _context.SaveChangesAsync();
+        try
+        {
+            // Create a new comment
+            var newComment = new Comment
+                {
+                    ConversationId = conversation.Id,
+                    Text = newCommentText,
+                    Author = UserSession.Username,
+                    CreatedAt = DateTime.Now
+                };
 
-        // Clear the form and refresh comments
-        newCommentText = string.Empty;
-        commentError = null;
-        comments.Add(newComment);
+            // Add and save to the database
+            _context.Comments.Add(newComment);
+            await _context.SaveChangesAsync();
+
+            // Clear the form and refresh comments
+            newCommentText = string.Empty;
+            commentError = null;
+            comments.Add(newComment);
+        }
+        catch (Exception ex)
+        {
+            commentError = "An error occurred while adding the comment.";
+            Console.WriteLine($"Error adding comment: {ex.Message}");
+        }
     }
 }
 
@@ -79,7 +102,7 @@
             @foreach (var comment in comments)
             {
                 <div class="comment">
-                    <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
+                    <p><strong>@comment.Author</strong> - <small>@comment.CreatedAt.ToString("g")</small></p>
                     <p>@comment.Text</p>
                 </div>
             }
@@ -87,12 +110,12 @@
     }
     else
     {
-        <p>Ei kommentteja. Ole ensimmäinen kommentoija!</p>
+        <p>No comments yet. Be the first to comment!</p>
     }
 
     @if (UserSession.IsLoggedIn)
     {
-        <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
+        <EditForm OnValidSubmit="AddComment">
             <div class="form-group">
                 <label for="newComment">Add a comment:</label>
                 <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
@@ -101,14 +124,14 @@
             <button class="btn btn-primary" type="submit">Post Comment</button>
         </EditForm>
 
-        @if (commentError != null)
+        @if (!string.IsNullOrEmpty(commentError))
         {
             <p style="color: red;">@commentError</p>
         }
     }
     else
     {
-        <p>Kirjaudu sisään kommentoidaksesi.</p>
+        <p>Please log in to comment.</p>
     }
 }
 else
@@ -136,5 +159,18 @@ else
         border: 1px solid #ddd;
         border-radius: 5px;
         margin-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .btn-primary {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
     }
 </style>
