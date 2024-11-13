@@ -30,6 +30,11 @@
         NavigationManager.NavigateTo("/add-user");
     }
 
+    private void NavigateToKartta()
+    {
+        NavigationManager.NavigateTo("/kartta");
+    }
+
 
 }
 
@@ -57,6 +62,7 @@
     <div class="action-buttons">
         <button class="btn-primary" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-primary" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
+        <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
     </div>
 </div>
 

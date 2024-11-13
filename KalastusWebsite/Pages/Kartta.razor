@@ -1,0 +1,19 @@
+@page "/kartta"
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+<h3>Fishing Map</h3>
+<div id="map" style="height: 500px; width: 100%;"></div>
+
+@code {
+    private string apiKey;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            apiKey = Configuration["Maanmittauslaitos:ApiKey"]; // Ensure API key is set in appsettings.json
+            await JSRuntime.InvokeVoidAsync("initializeMap", apiKey);
+        }
+    }
+}
