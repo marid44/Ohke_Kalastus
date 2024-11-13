@@ -88,12 +88,14 @@
         else
         {
             <EditForm Model="newUpload" OnValidSubmit="OnUploadButtonClicked">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">@ErrorMessage</div>
+                }
 
                 <div class="form-group">
                     <label for="file">Valitse tiedosto:</label>
-                    <InputFile OnChange="HandleFileSelected" accept="image/*,video/*" />
+                    <InputFile OnChange="HandleFileSelected" accept="image/*,video/mp4" />
                 </div>
 
                 <button type="submit" class="btn btn-primary" disabled="@(!CanUpload)">Lataa</button>
@@ -102,7 +104,7 @@
 
         <h3>Ladatut mediat</h3>
         <div class="media-gallery">
-            @if (mediaFiles?.Any() == true)
+            @if (mediaFiles.Any())
             {
                 @foreach (var media in mediaFiles)
                 {
@@ -127,7 +129,7 @@
                         }
 
                         <h4>Kommentit:</h4>
-                        @if (media.Comments.Any())
+                        @if (media.Comments != null && media.Comments.Any())
                         {
                             <ul>
                                 @foreach (var comment in media.Comments)
@@ -145,14 +147,14 @@
                             <p>Ei kommentteja.</p>
                         }
 
-                        <textarea placeholder="Kirjoita kommentti..." @bind="@newComment[media.Id]"></textarea>
+                        <textarea placeholder="Kirjoita kommentti..." @bind="newComment[media.Id]" class="form-control"></textarea>
                         <button class="btn btn-primary" @onclick="() => AddComment(media)">Lisää kommentti</button>
                     </div>
                 }
             }
             else
             {
-                <p>Ei ladattuja tiedostoja</p>
+                <p>Ei ladattuja tiedostoja.</p>
             }
         </div>
     </div>
@@ -166,16 +168,28 @@ else
     private MediaUploadModel newUpload = new MediaUploadModel();
     private IBrowserFile? selectedFile;
     private List<Media> mediaFiles = new List<Media>();
+    private const long MaxFileSize = 1024L * 1024 * 1024; // 1 GB tiedostokoko
     private Dictionary<int, string> newComment = new Dictionary<int, string>();
+    private string? ErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        // Lataa media tiedot ja kommentit tietokannasta
-        mediaFiles = await DbContext.MediaFiles.Include(m => m.Comments).ToListAsync();
-
-        foreach (var media in mediaFiles)
+        try
         {
-            newComment[media.Id] = string.Empty;
+            mediaFiles = await DbContext.MediaFiles.Include(m => m.Comments).ToListAsync();
+
+            foreach (var media in mediaFiles)
+            {
+                if (media.Comments == null)
+                {
+                    media.Comments = new List<MediaComment>();
+                }
+                newComment[media.Id] = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe tietojen lataamisessa: {ex.Message}");
         }
     }
 
@@ -185,37 +199,39 @@ else
 
         if (selectedFile != null)
         {
-            if (selectedFile.Size > 20L * 1024 * 1024) // 20 MB raja
+            if (selectedFile.Size > MaxFileSize)
             {
-                Console.WriteLine("Tiedosto on liian suuri.");
+                Console.WriteLine("Tiedosto on liian suuri. Maksimikoko on 1 GB.");
                 selectedFile = null;
-                newUpload.File = null;
             }
             else
             {
-                newUpload.File = selectedFile;
+                Console.WriteLine($"Valittu tiedosto: {selectedFile.Name} ({selectedFile.Size} bytes, {selectedFile.ContentType})");
             }
         }
     }
 
     private async Task OnUploadButtonClicked()
     {
-        if (newUpload.File != null && mediaFiles.Count < 20)
+        if (selectedFile != null && mediaFiles.Count < 20)
         {
             var uploadFolder = Path.Combine(Environment.WebRootPath, "uploads");
-            Directory.CreateDirectory(uploadFolder);
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
 
-            var filePath = Path.Combine(uploadFolder, newUpload.File.Name);
+            var filePath = Path.Combine(uploadFolder, selectedFile.Name);
 
             try
             {
                 using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
-                await newUpload.File.OpenReadStream(long.MaxValue).CopyToAsync(stream);
+                await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(stream);
 
                 var media = new Media
                     {
-                        FileName = newUpload.File.Name,
-                        FilePath = $"/uploads/{newUpload.File.Name}",
+                        FileName = selectedFile.Name,
+                        FilePath = $"/uploads/{selectedFile.Name}",
                         UploadedBy = UserSession.Username,
                         Comments = new List<MediaComment>()
                     };
@@ -226,32 +242,15 @@ else
                 mediaFiles.Add(media);
                 newComment[media.Id] = string.Empty;
 
-                Console.WriteLine($"Tiedosto tallennettu: {filePath}");
+                selectedFile = null;
+                ErrorMessage = null;
                 StateHasChanged();
             }
             catch (Exception ex)
             {
+                ErrorMessage = "Tiedoston tallennus epäonnistui. Yritä uudelleen.";
                 Console.WriteLine($"Virhe tiedoston tallennuksessa: {ex.Message}");
             }
-        }
-    }
-
-    private async Task DeleteMedia(Media media)
-    {
-        if (media.UploadedBy == UserSession.Username)
-        {
-            var filePath = Path.Combine(Environment.WebRootPath, "uploads", media.FileName);
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
-
-            DbContext.MediaFiles.Remove(media);
-            await DbContext.SaveChangesAsync();
-
-            mediaFiles.Remove(media);
-
-            StateHasChanged();
         }
     }
 
@@ -259,48 +258,65 @@ else
     {
         if (!string.IsNullOrWhiteSpace(newComment[media.Id]))
         {
+            var commentText = newComment[media.Id];
+            newComment[media.Id] = string.Empty; // Tyhjennä tekstikenttä ennen lisäystä
+
+            var comment = new MediaComment
+                {
+                    MediaId = media.Id,
+                    Text = commentText.Trim(),
+                    Username = UserSession.Username,
+                    CreatedAt = DateTime.Now
+                };
+
             try
             {
-                // Luo uusi kommentti
-                var comment = new MediaComment
-                    {
-                        MediaId = media.Id,
-                        Text = newComment[media.Id],
-                        Username = UserSession.Username,
-                        CreatedAt = DateTime.Now
-                    };
-
-                // Tallenna tietokantaan
                 DbContext.MediaComments.Add(comment);
                 await DbContext.SaveChangesAsync();
 
-                // Lataa tietokannasta päivitetty kommenttilista
-                var updatedMedia = await DbContext.MediaFiles
-                .Include(m => m.Comments)
-                .FirstOrDefaultAsync(m => m.Id == media.Id);
-
-                if (updatedMedia != null)
+                if (!media.Comments.Any(c => c.Text == commentText && c.Username == UserSession.Username))
                 {
-                    // Päivitä media-objektin kommentit
-                    media.Comments = updatedMedia.Comments;
+                    media.Comments.Add(comment);
                 }
 
-                // Tyhjennä kommentin tekstikenttä
-                newComment[media.Id] = string.Empty;
-
+                ErrorMessage = null;
                 StateHasChanged();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error adding comment: {ex.Message}");
+                ErrorMessage = "Kommentin lisääminen epäonnistui. Yritä uudelleen.";
+                Console.WriteLine($"Virhe kommentin lisäämisessä: {ex.Message}");
             }
         }
     }
 
+    private async Task DeleteMedia(Media media)
+    {
+        try
+        {
+            if (media.UploadedBy == UserSession.Username)
+            {
+                var filePath = Path.Combine(Environment.WebRootPath, "uploads", media.FileName);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
 
+                DbContext.MediaFiles.Remove(media);
+                await DbContext.SaveChangesAsync();
 
+                mediaFiles.Remove(media);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Tiedoston poistaminen epäonnistui. Yritä uudelleen.";
+            Console.WriteLine($"Virhe tiedoston poistamisessa: {ex.Message}");
+        }
+    }
 
-    private bool CanUpload => newUpload.File != null && mediaFiles.Count < 20;
+    private bool CanUpload => selectedFile != null && mediaFiles.Count < 20;
 
     public class MediaUploadModel
     {
