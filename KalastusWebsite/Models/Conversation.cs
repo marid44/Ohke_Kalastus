@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KalastusWebsite.Models
 {
@@ -15,29 +16,29 @@ namespace KalastusWebsite.Models
         [Required]
         public string Content { get; set; }
 
-        public string Username { get; set; }  // To store which user posted the conversation
-
+        public string Username { get; set; } // Keskustelun kirjoittaja
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Lista kommenteista, jotka liittyvät keskusteluun
+        // Kommentit, jotka liittyvät keskusteluun
         public List<Comment> Comments { get; set; } = new();
     }
-    public class Comment1
+    public class Comment
     {
         public int Id { get; set; }
 
         [Required]
-        public int ConversationId { get; set; } // Foreign key to Conversation
+        public int ConversationId { get; set; } // Viittaus keskusteluun
 
         [Required]
         [StringLength(500, ErrorMessage = "Comment cannot exceed 500 characters.")]
         public string Text { get; set; }
 
-        public string Username { get; set; }
+        public string Username { get; set; } // Kommentin kirjoittaja
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        // Navigaatio-ominaisuus takaisin keskusteluun
+        public Conversation Conversation { get; set; }
     }
 
+
 }
-
-
-

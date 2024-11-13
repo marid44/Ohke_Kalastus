@@ -7,9 +7,67 @@
 @inject NavigationManager NavigationManager
 @inject UserSession UserSession
 
+<h3>Keskustelun tiedot</h3>
+
+@if (conversation != null)
+{
+    <div class="conversation-detail">
+        <h2>@conversation.Title</h2>
+        <p>@conversation.Content</p>
+        <p><small>Luonut: @conversation.Username, @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
+
+        <h4>Kommentit</h4>
+
+        @if (comments.Any())
+        {
+            <div class="comments-section">
+                @foreach (var comment in comments)
+                {
+                    <div class="comment">
+                        <p>
+                            <strong>@comment.Username</strong> -
+                            <small>@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                        </p>
+                        <p>@comment.Text</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>Ei vielä kommentteja. Ole ensimmäinen!</p>
+        }
+
+        @if (UserSession.IsLoggedIn)
+        {
+            <EditForm Model="this" OnValidSubmit="AddComment">
+                <div class="form-group">
+                    <label for="newComment">Lisää kommentti:</label>
+                    <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
+                    <ValidationMessage For="@(() => newCommentText)" />
+                </div>
+                <button class="btn btn-primary" type="submit">Lähetä kommentti</button>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(commentError))
+            {
+                <p style="color: red;">@commentError</p>
+            }
+        }
+        else
+        {
+            <p>Kirjaudu sisään kommentoidaksesi.</p>
+        }
+    </div>
+}
+else
+{
+    <p>Ladataan keskustelua...</p>
+}
+
 @code {
     [Parameter]
-    public int Id { get; set; } // Conversation ID from URL
+    public int Id { get; set; } // URL-parametri
 
     private Conversation? conversation;
     private List<Comment> comments = new();
@@ -20,26 +78,29 @@
     {
         try
         {
-            // Fetch the conversation and associated comments
+            Console.WriteLine($"Ladataan keskustelu ID:llä {Id}");
+
+            // Hae keskustelu ja sen kommentit
             conversation = await _context.Conversations
             .Include(c => c.Comments)
             .FirstOrDefaultAsync(c => c.Id == Id);
 
             if (conversation != null)
             {
+                Console.WriteLine($"Keskustelu löytyi: {conversation.Title}");
                 comments = conversation.Comments
                 .OrderBy(c => c.CreatedAt)
                 .ToList();
             }
             else
             {
-                // Redirect if conversation is not found
+                Console.WriteLine("Keskustelua ei löytynyt.");
                 NavigationManager.NavigateTo("/conversations");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading conversation: {ex.Message}");
+            Console.WriteLine($"Virhe keskustelun lataamisessa: {ex.Message}");
             NavigationManager.NavigateTo("/conversations");
         }
     }
@@ -48,129 +109,43 @@
     {
         if (string.IsNullOrWhiteSpace(newCommentText))
         {
-            commentError = "Comment cannot be empty.";
+            commentError = "Kommentti ei voi olla tyhjä.";
             return;
         }
 
         if (conversation == null)
         {
-            commentError = "Conversation not found.";
+            commentError = "Keskustelua ei löytynyt.";
             return;
         }
 
         try
         {
-            // Create a new comment
+            Console.WriteLine($"Lisätään kommentti käyttäjältä: {UserSession.Username}");
+
             var newComment = new Comment
                 {
                     ConversationId = conversation.Id,
                     Text = newCommentText,
-                    Author = UserSession.Username,
+                    Username = UserSession.Username ?? "Tuntematon käyttäjä",
                     CreatedAt = DateTime.Now
                 };
 
-            // Add and save to the database
+            // Tallenna kommentti tietokantaan
             _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
 
-            // Clear the form and refresh comments
+            // Päivitä paikallinen kommenttilista
+            comments.Add(newComment);
             newCommentText = string.Empty;
             commentError = null;
-            comments.Add(newComment);
+
+            Console.WriteLine("Kommentti lisätty onnistuneesti.");
         }
         catch (Exception ex)
         {
-            commentError = "An error occurred while adding the comment.";
-            Console.WriteLine($"Error adding comment: {ex.Message}");
+            commentError = "Virhe kommentin lisäämisessä.";
+            Console.WriteLine($"Virhe kommenttia lisättäessä: {ex.Message}");
         }
     }
 }
-
-@if (conversation != null)
-{
-    <div class="conversation-detail">
-        <h2>@conversation.Title</h2>
-        <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
-        <p>@conversation.Content</p>
-    </div>
-
-    <h4>Comments</h4>
-
-    @if (comments.Any())
-    {
-        <div class="comments-section">
-            @foreach (var comment in comments)
-            {
-                <div class="comment">
-                    <p><strong>@comment.Author</strong> - <small>@comment.CreatedAt.ToString("g")</small></p>
-                    <p>@comment.Text</p>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>No comments yet. Be the first to comment!</p>
-    }
-
-    @if (UserSession.IsLoggedIn)
-    {
-        <EditForm OnValidSubmit="AddComment">
-            <div class="form-group">
-                <label for="newComment">Add a comment:</label>
-                <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
-                <ValidationMessage For="@(() => newCommentText)" />
-            </div>
-            <button class="btn btn-primary" type="submit">Post Comment</button>
-        </EditForm>
-
-        @if (!string.IsNullOrEmpty(commentError))
-        {
-            <p style="color: red;">@commentError</p>
-        }
-    }
-    else
-    {
-        <p>Please log in to comment.</p>
-    }
-}
-else
-{
-    <p>Loading...</p>
-}
-
-<style>
-    .conversation-detail {
-        padding: 20px;
-        background-color: #f9f9f9;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        max-width: 600px;
-        margin: 20px auto;
-    }
-
-    .comments-section {
-        margin-top: 20px;
-    }
-
-    .comment {
-        padding: 10px;
-        background-color: #f1f1f1;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    .btn-primary {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-</style>

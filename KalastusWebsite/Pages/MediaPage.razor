@@ -71,11 +71,8 @@
 
     ul {
         list-style-type: none;
-        /* Poistaa mustan pisteen */
         padding: 0;
-        /* Poistaa ylimääräiset sisennykset */
         margin: 0;
-        /* Poistaa ylimääräiset marginaalit */
     }
 </style>
 
@@ -136,7 +133,7 @@
                                 @foreach (var comment in media.Comments)
                                 {
                                     <li>
-                                        <strong>@comment.Author</strong>:
+                                        <strong>@comment.Username</strong>:
                                         <span class="comment">@comment.Text</span>
                                         <small>(@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm"))</small>
                                     </li>
@@ -188,8 +185,7 @@ else
 
         if (selectedFile != null)
         {
-            // Tarkista tiedoston koko
-            if (selectedFile.Size > 20L * 1024 * 1024 * 1024) // 20 GB raja
+            if (selectedFile.Size > 20L * 1024 * 1024) // 20 MB raja
             {
                 Console.WriteLine("Tiedosto on liian suuri.");
                 selectedFile = null;
@@ -204,7 +200,7 @@ else
 
     private async Task OnUploadButtonClicked()
     {
-        if (newUpload.File != null && mediaFiles.Count < 10)
+        if (newUpload.File != null && mediaFiles.Count < 20)
         {
             var uploadFolder = Path.Combine(Environment.WebRootPath, "uploads");
             Directory.CreateDirectory(uploadFolder);
@@ -213,7 +209,6 @@ else
 
             try
             {
-                // Striimaa tiedosto ilman kokorajoitusta
                 using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
                 await newUpload.File.OpenReadStream(long.MaxValue).CopyToAsync(stream);
 
@@ -222,7 +217,7 @@ else
                         FileName = newUpload.File.Name,
                         FilePath = $"/uploads/{newUpload.File.Name}",
                         UploadedBy = UserSession.Username,
-                        Comments = new List<Comment>()
+                        Comments = new List<MediaComment>()
                     };
 
                 DbContext.MediaFiles.Add(media);
@@ -264,22 +259,46 @@ else
     {
         if (!string.IsNullOrWhiteSpace(newComment[media.Id]))
         {
-            var comment = new Comment
+            try
+            {
+                // Luo uusi kommentti
+                var comment = new MediaComment
+                    {
+                        MediaId = media.Id,
+                        Text = newComment[media.Id],
+                        Username = UserSession.Username,
+                        CreatedAt = DateTime.Now
+                    };
+
+                // Tallenna tietokantaan
+                DbContext.MediaComments.Add(comment);
+                await DbContext.SaveChangesAsync();
+
+                // Lataa tietokannasta päivitetty kommenttilista
+                var updatedMedia = await DbContext.MediaFiles
+                .Include(m => m.Comments)
+                .FirstOrDefaultAsync(m => m.Id == media.Id);
+
+                if (updatedMedia != null)
                 {
-                    Text = newComment[media.Id],
-                    Author = UserSession.Username,
-                    CreatedAt = DateTime.Now,
-                    MediaId = media.Id
-                };
+                    // Päivitä media-objektin kommentit
+                    media.Comments = updatedMedia.Comments;
+                }
 
-            media.Comments.Add(comment);
-            DbContext.Comments.Add(comment);
-            await DbContext.SaveChangesAsync();
+                // Tyhjennä kommentin tekstikenttä
+                newComment[media.Id] = string.Empty;
 
-            newComment[media.Id] = string.Empty;
-            StateHasChanged();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding comment: {ex.Message}");
+            }
         }
     }
+
+
+
 
     private bool CanUpload => newUpload.File != null && mediaFiles.Count < 20;
 

@@ -10,7 +10,7 @@ namespace KalastusWebsite.Models
         public string FilePath { get; set; }
         public DateTime UploadedAt { get; set; } = DateTime.Now;
         public string UploadedBy { get; set; }
-        public List<Comment> Comments { get; set; } = new();
+        public List<MediaComment> Comments { get; set; } = new();
 
     }
 
