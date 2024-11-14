@@ -1,0 +1,75 @@
+wwwroot/uploads/
+# .NET Core ja Blazor -projektien oletukset
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Auto-generated files
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.log
+*.json.swp
+*.pdb
+*.mdb
+*.pidb
+*.cache
+*.ilk
+*.tmp
+*.csproj.user
+*.swp
+*.bak
+*.orig
+*.userprefs
+
+# Visual Studio
+.vscode/
+.vs/
+.vscode/
+
+# Rider
+.idea/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# wwwroot/uploads/ (ladatut tiedostot)
+wwwroot/uploads/
+
+# NPM-paketit
+node_modules/
+wwwroot/lib/
+
+# Paketointityökalut
+*.tgz
+*.npmrc
+
+# Logs
+*.log
+
+# Temporary files
+*.temp
+*.diff
+
+# Publish directory
+wwwroot/dist/
+
+# Secrets ja configuration (jos käytät jotain sensitiivistä tiedostoa, kuten .env)
+.env
+secrets.json
+appsettings.*.json
