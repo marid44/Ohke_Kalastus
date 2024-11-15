@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using KalastusWebsite.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace KalastusWebsite.Data
 {
@@ -9,8 +9,11 @@ namespace KalastusWebsite.Data
         {
         }
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<User> Users { get; set; } // Lisää tämä
+
+        public DbSet<Media> MediaFiles { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<MediaComment> MediaComments { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
     }
 }

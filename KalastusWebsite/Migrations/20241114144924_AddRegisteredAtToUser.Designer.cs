@@ -3,6 +3,7 @@ using System;
 using KalastusWebsite.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241114144924_AddRegisteredAtToUser")]
+    partial class AddRegisteredAtToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -93,12 +96,9 @@ namespace KalastusWebsite.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UploadedBy");
 
                     b.ToTable("MediaFiles");
                 });
@@ -137,18 +137,12 @@ namespace KalastusWebsite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Bio")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ProfileImagePath")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RegisteredAt")
@@ -177,8 +171,9 @@ namespace KalastusWebsite.Migrations
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
                     b.HasOne("KalastusWebsite.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .WithMany("MediaFiles")
+                        .HasForeignKey("UploadedBy")
+                        .HasPrincipalKey("Username")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -204,6 +199,11 @@ namespace KalastusWebsite.Migrations
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("KalastusWebsite.Models.User", b =>
+                {
+                    b.Navigation("MediaFiles");
                 });
 #pragma warning restore 612, 618
         }

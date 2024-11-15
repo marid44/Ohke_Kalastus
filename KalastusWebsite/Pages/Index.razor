@@ -30,6 +30,11 @@
         NavigationManager.NavigateTo("/add-user");
     }
 
+    private void NavigateToMedia()
+    {
+        NavigationManager.NavigateTo("/add-media");
+    }
+
 
 }
 
@@ -57,6 +62,7 @@
     <div class="action-buttons">
         <button class="btn-primary" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-primary" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
+        <button class="btn-primary" @onclick="NavigateToMedia">Lisää kuvia</button>
     </div>
 </div>
 

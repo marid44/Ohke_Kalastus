@@ -1,0 +1,325 @@
+@page "/add-media"
+@using Microsoft.AspNetCore.Components.Forms
+@using KalastusWebsite.Models
+@using KalastusWebsite.Data
+@using KalastusWebsite.Services
+@inject IWebHostEnvironment Environment
+@inject AppDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject UserSession UserSession
+@using Microsoft.EntityFrameworkCore
+
+<style>
+    .upload-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .btn-primary {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .media-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .media-item {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        width: 250px;
+        text-align: center;
+        background-color: white;
+    }
+
+    .media-item video,
+    .media-item img {
+        width: 100%;
+        border-radius: 4px;
+    }
+
+    .comment {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+        max-width: 100%;
+        display: block;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+</style>
+
+@if (UserSession?.IsLoggedIn ?? false)
+{
+    <div class="upload-container">
+        <h2>Lataa mediaa</h2>
+
+        @if (mediaFiles.Count >= 20)
+        {
+            <p>Olet saavuttanut ladattujen tiedostojen maksimimäärän (20).</p>
+        }
+        else
+        {
+            <EditForm Model="newUpload" OnValidSubmit="OnUploadButtonClicked">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">@ErrorMessage</div>
+                }
+
+                <div class="form-group">
+                    <label for="file">Valitse tiedosto:</label>
+                    <InputFile OnChange="HandleFileSelected" accept="image/*,video/mp4" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" disabled="@(!CanUpload)">Lataa</button>
+            </EditForm>
+        }
+
+        <h3>Ladatut mediat</h3>
+        <div class="media-gallery">
+            @if (mediaFiles.Any())
+            {
+                @foreach (var media in mediaFiles)
+                {
+                    <div class="media-item">
+                        @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <video controls>
+                                <source src="@media.FilePath" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        }
+                        else
+                        {
+                            <img src="@media.FilePath" alt="Ladattu media" />
+                        }
+
+                        <p>Lähettänyt: @media.UploadedBy</p>
+
+                        @if (media.UploadedBy == UserSession.Username)
+                        {
+                            <button class="btn-delete" @onclick="() => DeleteMedia(media)">Poista</button>
+                        }
+
+                        <h4>Kommentit:</h4>
+                        @if (media.Comments != null && media.Comments.Any())
+                        {
+                            <ul>
+                                @foreach (var comment in media.Comments)
+                                {
+                                    <li>
+                                        <strong>@comment.Username</strong>:
+                                        <span class="comment">@comment.Text</span>
+                                        <small>(@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm"))</small>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>Ei kommentteja.</p>
+                        }
+
+                        <textarea placeholder="Kirjoita kommentti..." @bind="newComment[media.Id]" class="form-control"></textarea>
+                        <button class="btn btn-primary" @onclick="() => AddComment(media)">Lisää kommentti</button>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei ladattuja tiedostoja.</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <p>Sinun täytyy kirjautua sisään ladataksesi mediaa.</p>
+}
+
+@code {
+    private MediaUploadModel newUpload = new MediaUploadModel();
+    private IBrowserFile? selectedFile;
+    private List<Media> mediaFiles = new List<Media>();
+    private const long MaxFileSize = 1024L * 1024 * 1024; // 1 GB tiedostokoko
+    private Dictionary<int, string> newComment = new Dictionary<int, string>();
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            mediaFiles = await DbContext.MediaFiles.Include(m => m.Comments).ToListAsync();
+
+            foreach (var media in mediaFiles)
+            {
+                if (media.Comments == null)
+                {
+                    media.Comments = new List<MediaComment>();
+                }
+                newComment[media.Id] = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe tietojen lataamisessa: {ex.Message}");
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+
+        if (selectedFile != null)
+        {
+            if (selectedFile.Size > MaxFileSize)
+            {
+                Console.WriteLine("Tiedosto on liian suuri. Maksimikoko on 1 GB.");
+                selectedFile = null;
+            }
+            else
+            {
+                Console.WriteLine($"Valittu tiedosto: {selectedFile.Name} ({selectedFile.Size} bytes, {selectedFile.ContentType})");
+            }
+        }
+    }
+
+    private async Task OnUploadButtonClicked()
+    {
+        if (selectedFile != null && mediaFiles.Count < 20)
+        {
+            var uploadFolder = Path.Combine(Environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            var filePath = Path.Combine(uploadFolder, selectedFile.Name);
+
+            try
+            {
+                using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+                await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(stream);
+
+                var media = new Media
+                    {
+                        FileName = selectedFile.Name,
+                        FilePath = $"/uploads/{selectedFile.Name}",
+                        UploadedBy = UserSession.Username,
+                        Comments = new List<MediaComment>()
+                    };
+
+                DbContext.MediaFiles.Add(media);
+                await DbContext.SaveChangesAsync();
+
+                mediaFiles.Add(media);
+                newComment[media.Id] = string.Empty;
+
+                selectedFile = null;
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Tiedoston tallennus epäonnistui. Yritä uudelleen.";
+                Console.WriteLine($"Virhe tiedoston tallennuksessa: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task AddComment(Media media)
+    {
+        if (!string.IsNullOrWhiteSpace(newComment[media.Id]))
+        {
+            var commentText = newComment[media.Id];
+            newComment[media.Id] = string.Empty; // Tyhjennä tekstikenttä ennen lisäystä
+
+            var comment = new MediaComment
+                {
+                    MediaId = media.Id,
+                    Text = commentText.Trim(),
+                    Username = UserSession.Username,
+                    CreatedAt = DateTime.Now
+                };
+
+            try
+            {
+                DbContext.MediaComments.Add(comment);
+                await DbContext.SaveChangesAsync();
+
+                if (!media.Comments.Any(c => c.Text == commentText && c.Username == UserSession.Username))
+                {
+                    media.Comments.Add(comment);
+                }
+
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Kommentin lisääminen epäonnistui. Yritä uudelleen.";
+                Console.WriteLine($"Virhe kommentin lisäämisessä: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task DeleteMedia(Media media)
+    {
+        try
+        {
+            if (media.UploadedBy == UserSession.Username)
+            {
+                var filePath = Path.Combine(Environment.WebRootPath, "uploads", media.FileName);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+
+                DbContext.MediaFiles.Remove(media);
+                await DbContext.SaveChangesAsync();
+
+                mediaFiles.Remove(media);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Tiedoston poistaminen epäonnistui. Yritä uudelleen.";
+            Console.WriteLine($"Virhe tiedoston poistamisessa: {ex.Message}");
+        }
+    }
+
+    private bool CanUpload => selectedFile != null && mediaFiles.Count < 20;
+
+    public class MediaUploadModel
+    {
+        public IBrowserFile? File { get; set; }
+    }
+}
