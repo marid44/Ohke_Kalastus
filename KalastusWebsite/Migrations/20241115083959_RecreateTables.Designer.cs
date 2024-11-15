@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241114202740_CreateUserProfilesTable")]
-    partial class CreateUserProfilesTable
+    [Migration("20241115083959_RecreateTables")]
+    partial class RecreateTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -98,6 +98,8 @@ namespace KalastusWebsite.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UploadedBy");
+
                     b.ToTable("MediaFiles");
                 });
 
@@ -167,10 +169,12 @@ namespace KalastusWebsite.Migrations
                     b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Username")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserProfiles");
                 });
@@ -186,6 +190,16 @@ namespace KalastusWebsite.Migrations
                     b.Navigation("Conversation");
                 });
 
+            modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
+                {
+                    b.HasOne("KalastusWebsite.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedBy")
+                        .HasPrincipalKey("Username")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("KalastusWebsite.Models.MediaComment", b =>
                 {
                     b.HasOne("KalastusWebsite.Models.Media", "Media")
@@ -195,6 +209,17 @@ namespace KalastusWebsite.Migrations
                         .IsRequired();
 
                     b.Navigation("Media");
+                });
+
+            modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>
+                {
+                    b.HasOne("KalastusWebsite.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.Conversation", b =>

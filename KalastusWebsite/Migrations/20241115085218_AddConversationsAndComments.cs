@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace KalastusWebsite.Migrations
 {
     /// <inheritdoc />
-    public partial class AddPrimaryKeyToUserProfile : Migration
+    public partial class AddConversationsAndComments : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,9 +14,6 @@ namespace KalastusWebsite.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_MediaFiles_Users_UploadedBy",
                 table: "MediaFiles");
-
-            migrationBuilder.DropTable(
-                name: "UserNotes");
 
             migrationBuilder.DropUniqueConstraint(
                 name: "AK_Users_Username",
@@ -27,47 +24,41 @@ namespace KalastusWebsite.Migrations
                 table: "MediaFiles");
 
             migrationBuilder.CreateTable(
-                name: "UserProfiles",
+                name: "BioHistory",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Username = table.Column<string>(type: "TEXT", nullable: true),
-                    Bio = table.Column<string>(type: "TEXT", nullable: true),
-                    ProfileImagePath = table.Column<string>(type: "TEXT", nullable: true),
-                    RegisteredAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    BioText = table.Column<string>(type: "TEXT", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UserProfileId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfiles", x => x.Id);
+                    table.PrimaryKey("PK_BioHistory", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BioHistory_UserProfiles_UserProfileId",
+                        column: x => x.UserProfileId,
+                        principalTable: "UserProfiles",
+                        principalColumn: "Id");
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BioHistory_UserProfileId",
+                table: "BioHistory",
+                column: "UserProfileId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "UserProfiles");
+                name: "BioHistory");
 
             migrationBuilder.AddUniqueConstraint(
                 name: "AK_Users_Username",
                 table: "Users",
                 column: "Username");
-
-            migrationBuilder.CreateTable(
-                name: "UserNotes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    NoteContent = table.Column<string>(type: "TEXT", nullable: false),
-                    Username = table.Column<string>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserNotes", x => x.Id);
-                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaFiles_UploadedBy",

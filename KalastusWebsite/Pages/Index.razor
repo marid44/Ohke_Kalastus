@@ -35,14 +35,25 @@
         NavigationManager.NavigateTo("/add-media");
     }
 
-
+    private void NavigateToProfile()
+    {
+        if (UserSession.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo($"/profile/{UserSession.Username}");
+        }
+        else
+        {
+            UserSession.RedirectUrl = "/profile";
+            NavigationManager.NavigateTo("/login");
+        }
+    }
 }
 
 <div class="hero">
     <h1>Kalastajien yhteisö</h1>
     @if (!UserSession.IsLoggedIn)
     {
-        <p>Liity jäseneksi, jaa kokemuksiasi, ja keskustele muiden kalastajien kanssa!.</p>
+        <p>Liity jäseneksi, jaa kokemuksiasi, ja keskustele muiden kalastajien kanssa!</p>
         <button class="hero-btn" @onclick="NavigateToRegister">Liity yhteisöön</button>
     }
 </div>
@@ -63,6 +74,10 @@
         <button class="btn-primary" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-primary" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
         <button class="btn-primary" @onclick="NavigateToMedia">Lisää kuvia</button>
+        @if (UserSession.IsLoggedIn)
+        {
+            <button class="btn-secondary" @onclick="NavigateToProfile">Profiili</button>
+        }
     </div>
 </div>
 
@@ -97,11 +112,9 @@
         /* Keep the overlay behind the text */
     }
 
-
     .hero h1 {
         font-size: 2.5em;
         margin-bottom: 10px;
-
     }
 
     .hero p {

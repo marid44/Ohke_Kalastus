@@ -9,11 +9,23 @@ namespace KalastusWebsite.Data
         {
         }
 
-        public DbSet<User> Users { get; set; } // Lisää tämä
-
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Media> MediaFiles { get; set; }
-        public DbSet<Comment> Comments { get; set; }
         public DbSet<MediaComment> MediaComments { get; set; }
-        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Conversation> Conversations { get; set; } // Puuttuva Conversations
+        public DbSet<Comment> Comments { get; set; } // Puuttuva Comments
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Suhteen määrittelyt Conversationsille ja Commentsille (jos tarpeen)
+            modelBuilder.Entity<Conversation>()
+                .HasMany(c => c.Comments)
+                .WithOne(c => c.Conversation)
+                .HasForeignKey(c => c.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
