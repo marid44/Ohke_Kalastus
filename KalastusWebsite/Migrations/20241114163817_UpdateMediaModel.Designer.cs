@@ -3,6 +3,7 @@ using System;
 using KalastusWebsite.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241114163817_UpdateMediaModel")]
+    partial class UpdateMediaModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -80,10 +83,12 @@ namespace KalastusWebsite.Migrations
 
                     b.Property<string>("FileName")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UploadedAt")
@@ -91,14 +96,12 @@ namespace KalastusWebsite.Migrations
 
                     b.Property<string>("UploadedBy")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UploadedBy");
 
                     b.ToTable("MediaFiles");
                 });
@@ -137,21 +140,12 @@ namespace KalastusWebsite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Bio")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ProfileImagePath")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
@@ -176,13 +170,12 @@ namespace KalastusWebsite.Migrations
 
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
-                    b.HasOne("KalastusWebsite.Models.User", "User")
+                    b.HasOne("KalastusWebsite.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UploadedBy")
+                        .HasPrincipalKey("Username")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.MediaComment", b =>
