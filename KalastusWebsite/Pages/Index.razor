@@ -60,9 +60,17 @@
     </div>
 </div>
 
-    <div class="action-buttons">
-        <button class="btn-primary"> Uutiset & Tapahtumat </button>
-    </div>
+<div class="action-buttons">
+    <button class="btn-primary" @onclick="NavigateToEvents">Uutiset & Tapahtumat</button>
+</div>
+@code {
+    private void NavigateToEvents()
+    {
+        NavManager.NavigateTo("/events");
+    }
+
+    [Inject] private NavigationManager NavManager { get; set; }
+}
 
 <style>
     /* Hero Section */

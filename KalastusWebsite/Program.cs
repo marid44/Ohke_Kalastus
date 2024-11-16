@@ -14,6 +14,7 @@ builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
+builder.Services.AddSingleton<EventService>();
 
 
 var app = builder.Build();

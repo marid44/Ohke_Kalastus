@@ -1,0 +1,63 @@
+@page "/events"
+@inject KalastusWebsite.Services.EventService EventService
+
+<h1>Tapahtumat</h1>
+
+<div>
+    <h3>Lisää uusi tapahtuma</h3>
+    <input @bind="NewEventTitle" placeholder="Otsikko" />
+    <input type="date" @bind="NewEventDate" />
+    <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
+    <button @onclick="AddEvent">Lisää tapahtuma</button>
+</div>
+
+<hr />
+
+<div>
+    <h3>Kaikki tapahtumat</h3>
+    @if (EventService.GetEvents().Any())
+    {
+        <ul>
+            @foreach (var ev in EventService.GetEvents())
+            {
+                <li>
+                    <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
+                    @ev.Description<br />
+                    <button @onclick="() => RemoveEvent(ev.Id)">Poista</button>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>Ei tapahtumia.</p>
+    }
+</div>
+
+@code {
+    private string NewEventTitle = string.Empty;
+    private DateTime NewEventDate = DateTime.Now;
+    private string NewEventDescription = string.Empty;
+
+    private void AddEvent()
+    {
+        var newEvent = new KalastusWebsite.Models.Event
+        {
+            Title = NewEventTitle,
+            Date = NewEventDate,
+            Description = NewEventDescription
+        };
+
+        EventService.AddEvent(newEvent);
+
+        // Tyhjennetään syöttökentät
+        NewEventTitle = string.Empty;
+        NewEventDate = DateTime.Now;
+        NewEventDescription = string.Empty;
+    }
+
+    private void RemoveEvent(int id)
+    {
+        EventService.RemoveEvent(id);
+    }
+}
