@@ -9,6 +9,8 @@ namespace KalastusWebsite.Data
         {
         }
 
+        public DbSet<BioHistory> BioHistories { get; set; }
+
         public DbSet<User> Users { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Media> MediaFiles { get; set; }

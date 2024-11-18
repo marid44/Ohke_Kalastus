@@ -35,23 +35,37 @@
         margin: 0;
     }
 
-    .textarea-container {
-        margin-top: 10px;
+    .bio-display-box {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f1f1f1;
     }
 
-    .textarea-container textarea {
+    .textarea-container {
         width: 100%;
-        height: 80px;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 5px;
         resize: none;
+        background-color: white;
+        margin-bottom: 10px;
     }
 
     .btn-primary {
         background-color: #4CAF50;
         color: white;
         padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-delete {
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
@@ -77,30 +91,9 @@
     .media-item img,
     .media-item video {
         max-width: 100%;
+        max-height: 200px;
         border-radius: 4px;
-    }
-
-    .comment-section {
-        margin-top: 10px;
-        text-align: left;
-    }
-
-    .comment-section h5 {
-        margin-bottom: 5px;
-    }
-
-    ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    ul li {
-        padding: 5px 0;
-        border-bottom: 1px solid #ccc;
-    }
-
-    ul li:last-child {
-        border-bottom: none;
+        object-fit: cover;
     }
 </style>
 
@@ -123,38 +116,30 @@
             </div>
             <div class="profile-info">
                 <h2>@userProfile.User?.Username</h2>
-                @if (UserSession.Username == userProfile.User?.Username)
-                {
-                    <div class="textarea-container">
-                        <textarea placeholder="Kirjoita biotekstisi..." @bind="userProfile.Bio"></textarea>
-                    </div>
-                    <button class="btn-primary" @onclick="SaveBio">Tallenna Bio</button>
-                }
-                else
-                {
-                    <p>@userProfile.Bio</p>
-                }
-                <p style="color: green;">@(bioSavedMessage ?? "")</p>
             </div>
         </div>
 
-        <div class="history-section">
-            <h3>Biotekstin historia:</h3>
-            @if (userProfile.BioHistory.Any())
+        <!-- Bio Section -->
+        <div class="bio-display-box">
+            <h3>Bio</h3>
+            @if (isEditingBio)
             {
-                <ul>
-                    @foreach (var bio in userProfile.BioHistory.OrderByDescending(b => b.UpdatedAt))
-                    {
-                        <li><strong>@bio.UpdatedAt.ToString("dd.MM.yyyy HH:mm"):</strong> @bio.BioText</li>
-                    }
-                </ul>
+                <textarea class="textarea-container" @bind="userProfile.Bio"></textarea>
+                <button class="btn-primary" @onclick="SaveBio">Tallenna</button>
+                <button class="btn-delete" @onclick="CancelEdit">Peruuta</button>
             }
             else
             {
-                <p>Ei historiallisia biotekstejä.</p>
+                <p>@userProfile.Bio</p>
+                @if (UserSession.Username == userProfile.User?.Username)
+                {
+                    <button class="btn-primary" @onclick="EditBio">Muokkaa</button>
+                }
             }
+            <p style="color: green;">@(bioSavedMessage ?? "")</p>
         </div>
 
+        <!-- Media Section -->
         <div class="media-section">
             <h3>Ladatut mediat:</h3>
             @if (userMedia.Any())
@@ -174,23 +159,6 @@
                             {
                                 <img src="@media.FilePath" alt="Ladattu media" />
                             }
-
-                            <div class="comment-section">
-                                <h5>Kommentit:</h5>
-                                @if (media.Comments?.Any() ?? false)
-                                {
-                                    <ul>
-                                        @foreach (var comment in media.Comments)
-                                        {
-                                            <li><strong>@comment.Username</strong>: @comment.Text</li>
-                                        }
-                                    </ul>
-                                }
-                                else
-                                {
-                                    <p>Ei kommentteja.</p>
-                                }
-                            </div>
                         </div>
                     }
                 </div>
@@ -213,6 +181,7 @@
     private List<Media> userMedia = new();
     private string? bioSavedMessage;
     private string? imageUploadMessage;
+    private bool isEditingBio = false;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -222,7 +191,6 @@
             {
                 userProfile = await DbContext.UserProfiles
                 .Include(up => up.User)
-                .Include(up => up.BioHistory)
                 .FirstOrDefaultAsync(up => up.User!.Username == username);
 
                 if (userProfile == null)
@@ -249,7 +217,6 @@
 
                 userMedia = await DbContext.MediaFiles
                 .Where(m => m.UploadedBy == username)
-                .Include(m => m.Comments)
                 .ToListAsync();
             }
             catch (Exception ex)
@@ -259,25 +226,26 @@
         }
     }
 
+    private void EditBio()
+    {
+        isEditingBio = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditingBio = false;
+    }
+
     private async Task SaveBio()
     {
         if (userProfile != null)
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(userProfile.Bio))
-                {
-                    userProfile.BioHistory.Add(new BioHistory
-                        {
-                            BioText = userProfile.Bio,
-                            UpdatedAt = DateTime.Now
-                        });
-                }
-
                 DbContext.UserProfiles.Update(userProfile);
                 await DbContext.SaveChangesAsync();
-
                 bioSavedMessage = "Bioteksti tallennettu onnistuneesti!";
+                isEditingBio = false;
             }
             catch (Exception ex)
             {
@@ -302,7 +270,7 @@
             try
             {
                 using var stream = new FileStream(filePath, FileMode.Create);
-                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream); // Max 10MB tiedosto
+                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream);
 
                 userProfile.ProfileImagePath = $"/profile-images/{file.Name}";
                 DbContext.UserProfiles.Update(userProfile);

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241115085218_AddConversationsAndComments")]
-    partial class AddConversationsAndComments
+    [Migration("20241118072220_AddBioHistories")]
+    partial class AddBioHistories
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,7 +39,7 @@ namespace KalastusWebsite.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("BioHistory");
+                    b.ToTable("BioHistories");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>

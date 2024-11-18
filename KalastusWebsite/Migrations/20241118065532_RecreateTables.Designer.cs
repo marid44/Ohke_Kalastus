@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241115083959_RecreateTables")]
+    [Migration("20241118065532_RecreateTables")]
     partial class RecreateTables
     {
         /// <inheritdoc />
@@ -19,6 +19,28 @@ namespace KalastusWebsite.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+
+            modelBuilder.Entity("KalastusWebsite.Models.BioHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BioText")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UserProfileId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserProfileId");
+
+                    b.ToTable("BioHistory");
+                });
 
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>
                 {
@@ -97,8 +119,6 @@ namespace KalastusWebsite.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UploadedBy");
 
                     b.ToTable("MediaFiles");
                 });
@@ -179,6 +199,13 @@ namespace KalastusWebsite.Migrations
                     b.ToTable("UserProfiles");
                 });
 
+            modelBuilder.Entity("KalastusWebsite.Models.BioHistory", b =>
+                {
+                    b.HasOne("KalastusWebsite.Models.UserProfile", null)
+                        .WithMany("BioHistory")
+                        .HasForeignKey("UserProfileId");
+                });
+
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>
                 {
                     b.HasOne("KalastusWebsite.Models.Conversation", "Conversation")
@@ -188,16 +215,6 @@ namespace KalastusWebsite.Migrations
                         .IsRequired();
 
                     b.Navigation("Conversation");
-                });
-
-            modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
-                {
-                    b.HasOne("KalastusWebsite.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UploadedBy")
-                        .HasPrincipalKey("Username")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.MediaComment", b =>
@@ -230,6 +247,11 @@ namespace KalastusWebsite.Migrations
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>
+                {
+                    b.Navigation("BioHistory");
                 });
 #pragma warning restore 612, 618
         }
