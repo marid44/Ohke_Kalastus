@@ -5,9 +5,7 @@
 @inject AppDbContext DbContext
 @inject UserSession UserSession
 @using Microsoft.EntityFrameworkCore
-@inject NavigationManager NavigationManager
 @inject IWebHostEnvironment Environment
-@inject IJSRuntime JSRuntime
 
 <style>
     .profile-container {
@@ -121,6 +119,7 @@
             </div>
         </div>
 
+        <!-- Bio Section -->
         <div class="bio-display-box">
             <h3>Bio</h3>
             @if (isEditingBio)
@@ -140,6 +139,7 @@
             <p style="color: green;">@(bioSavedMessage ?? "")</p>
         </div>
 
+        <!-- Media Section -->
         <div class="media-section">
             <h3>Ladatut mediat:</h3>
             @if (userMedia.Any())
@@ -185,14 +185,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!UserSession.IsLoggedIn)
-        {
-            // Tallenna nykyinen URL sessionStorageen
-            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "RedirectUrl", $"/profile/{username}");
-            NavigationManager.NavigateTo("/login");
-            return;
-        }
-
         if (!string.IsNullOrEmpty(username))
         {
             try
