@@ -15,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
 builder.Services.AddSingleton<EventService>();
+builder.Services.AddScoped<KalastusWebsite.Services.UserSession>();
 
 
 var app = builder.Build();

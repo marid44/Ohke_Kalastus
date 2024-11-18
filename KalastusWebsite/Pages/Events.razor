@@ -1,14 +1,22 @@
 @page "/events"
 @inject KalastusWebsite.Services.EventService EventService
+@inject KalastusWebsite.Services.UserSession UserSession
 
 <h1>Tapahtumat</h1>
 
 <div>
+    @if (UserSession.IsLoggedIn)
+    {
     <h3>Lisää uusi tapahtuma</h3>
     <input @bind="NewEventTitle" placeholder="Otsikko" />
     <input type="date" @bind="NewEventDate" />
     <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
     <button @onclick="AddEvent">Lisää tapahtuma</button>
+    }
+    else
+    {
+        <p>Kirjaudu sisään, jotta voit lisätä tapahtumia.</p>
+    }
 </div>
 
 <hr />
@@ -23,7 +31,11 @@
                 <li>
                     <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
                     @ev.Description<br />
-                    <button @onclick="() => RemoveEvent(ev.Id)">Poista</button>
+                    <em>Luonut: @ev.CreatedBy</em>
+                    @if (ev.CreatedBy == UserSession.Username)
+                    {
+                        <button @onclick="() => RemoveEvent(ev.Id)">Poista</button>
+                    }
                 </li>
             }
         </ul>
@@ -41,11 +53,19 @@
 
     private void AddEvent()
     {
+        if (!UserSession.IsLoggedIn)
+        {
+            // Käyttäjä ei ole kirjautunut, näytä virheilmoitus
+            Console.WriteLine("Vain kirjautuneet käyttäjät voivat lisätä tapahtumia!");
+            return;
+        }
+
         var newEvent = new KalastusWebsite.Models.Event
         {
             Title = NewEventTitle,
             Date = NewEventDate,
-            Description = NewEventDescription
+            Description = NewEventDescription,
+            CreatedBy = UserSession.Username // Tallentaa käyttäjää
         };
 
         EventService.AddEvent(newEvent);
@@ -58,6 +78,13 @@
 
     private void RemoveEvent(int id)
     {
-        EventService.RemoveEvent(id);
+        if (!UserSession.IsLoggedIn)
+        {
+            // Käyttäjä ei ole kirjautunut, estä poisto
+            Console.WriteLine("Vain kirjautuneet käyttäjät voivat poistaa tapahtumia!");
+            return;
+        }
+
+        EventService.RemoveEvent(id, UserSession.Username);
     }
 }
