@@ -30,7 +30,6 @@
         <button class="btn-discussion" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-view" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
         <button class="btn-media" @onclick="NavigateToMedia">Lisää kuvia</button>
-        <button class="btn-profile" @onclick="NavigateToProfile">Profiili</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
     </div>
 </div>
@@ -197,19 +196,6 @@
     private void NavigateToMedia()
     {
         NavigationManager.NavigateTo("/add-media");
-    }
-
-    private void NavigateToProfile()
-    {
-        if (UserSession.IsLoggedIn)
-        {
-            NavigationManager.NavigateTo($"/profile/{UserSession.Username}");
-        }
-        else
-        {
-            UserSession.RedirectUrl = "/profile";
-            NavigationManager.NavigateTo("/login");
-        }
     }
 
     private void NavigateToMediaGallery()
