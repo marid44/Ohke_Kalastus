@@ -4,6 +4,7 @@
 @using KalastusWebsite.Data
 @inject AppDbContext DbContext
 @inject UserSession UserSession
+@inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
 @inject IWebHostEnvironment Environment
 
@@ -95,6 +96,12 @@
         border-radius: 4px;
         object-fit: cover;
     }
+
+    .media-item img:hover,
+    .media-item video:hover {
+        cursor: pointer;
+        opacity: 0.9;
+    }
 </style>
 
 <div class="profile-container">
@@ -141,7 +148,9 @@
 
         <!-- Media Section -->
         <div class="media-section">
-            <h3>Ladatut mediat:</h3>
+            <h3>
+                <a href="/add-media" style="text-decoration: none; color: inherit;">Ladatut mediat:</a>
+            </h3>
             @if (userMedia.Any())
             {
                 <div class="media-gallery">
@@ -157,7 +166,9 @@
                             }
                             else
                             {
-                                <img src="@media.FilePath" alt="Ladattu media" />
+                                <a href="/image/@media.Id">
+                                    <img src="@media.FilePath" alt="Ladattu media" />
+                                </a>
                             }
                         </div>
                     }
@@ -168,6 +179,7 @@
                 <p>Käyttäjällä ei ole ladattuja medioita.</p>
             }
         </div>
+
     }
     else
     {
