@@ -5,7 +5,7 @@
 namespace KalastusWebsite.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateUserProfilesTable : Migration
+    public partial class RecreateTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

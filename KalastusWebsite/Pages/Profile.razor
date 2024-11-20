@@ -1,0 +1,287 @@
+@page "/profile/{username}"
+@using KalastusWebsite.Services
+@using KalastusWebsite.Models
+@using KalastusWebsite.Data
+@inject AppDbContext DbContext
+@inject UserSession UserSession
+@using Microsoft.EntityFrameworkCore
+@inject IWebHostEnvironment Environment
+
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        margin-right: 20px;
+        border: 2px solid #ccc;
+    }
+
+    .profile-info h2 {
+        margin: 0;
+    }
+
+    .bio-display-box {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f1f1f1;
+    }
+
+    .textarea-container {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        resize: none;
+        background-color: white;
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-delete {
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .media-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .media-item {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        width: 250px;
+        text-align: center;
+        background-color: white;
+    }
+
+    .media-item img,
+    .media-item video {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+</style>
+
+<div class="profile-container">
+    @if (userProfile != null)
+    {
+        <div class="profile-header">
+            <div>
+                <img src="@userProfile.ProfileImagePath" alt="Profiilikuva" class="profile-image" />
+                @if (UserSession.Username == userProfile.User?.Username)
+                {
+                    <div>
+                        <InputFile OnChange="HandleProfileImageUpload" />
+                        @if (!string.IsNullOrEmpty(imageUploadMessage))
+                        {
+                            <p style="color: green;">@imageUploadMessage</p>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="profile-info">
+                <h2>@userProfile.User?.Username</h2>
+            </div>
+        </div>
+
+        <!-- Bio Section -->
+        <div class="bio-display-box">
+            <h3>Bio</h3>
+            @if (isEditingBio)
+            {
+                <textarea class="textarea-container" @bind="userProfile.Bio"></textarea>
+                <button class="btn-primary" @onclick="SaveBio">Tallenna</button>
+                <button class="btn-delete" @onclick="CancelEdit">Peruuta</button>
+            }
+            else
+            {
+                <p>@userProfile.Bio</p>
+                @if (UserSession.Username == userProfile.User?.Username)
+                {
+                    <button class="btn-primary" @onclick="EditBio">Muokkaa</button>
+                }
+            }
+            <p style="color: green;">@(bioSavedMessage ?? "")</p>
+        </div>
+
+        <!-- Media Section -->
+        <div class="media-section">
+            <h3>Ladatut mediat:</h3>
+            @if (userMedia.Any())
+            {
+                <div class="media-gallery">
+                    @foreach (var media in userMedia)
+                    {
+                        <div class="media-item">
+                            @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <video controls>
+                                    <source src="@media.FilePath" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            }
+                            else
+                            {
+                                <img src="@media.FilePath" alt="Ladattu media" />
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>Käyttäjällä ei ole ladattuja medioita.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <p style="color: red;">@(bioSavedMessage ?? "Käyttäjää ei löytynyt.")</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string? username { get; set; }
+    private UserProfile? userProfile;
+    private List<Media> userMedia = new();
+    private string? bioSavedMessage;
+    private string? imageUploadMessage;
+    private bool isEditingBio = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(username))
+        {
+            try
+            {
+                userProfile = await DbContext.UserProfiles
+                .Include(up => up.User)
+                .FirstOrDefaultAsync(up => up.User!.Username == username);
+
+                if (userProfile == null)
+                {
+                    var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Username == username);
+                    if (user != null)
+                    {
+                        userProfile = new UserProfile
+                            {
+                                UserId = user.Id,
+                                Bio = "Tervetuloa profiiliini!",
+                                ProfileImagePath = "/images/default-profile.png"
+                            };
+
+                        DbContext.UserProfiles.Add(userProfile);
+                        await DbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        bioSavedMessage = "Käyttäjää ei löytynyt.";
+                        return;
+                    }
+                }
+
+                userMedia = await DbContext.MediaFiles
+                .Where(m => m.UploadedBy == username)
+                .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                bioSavedMessage = $"Virhe profiilin lataamisessa: {ex.Message}";
+            }
+        }
+    }
+
+    private void EditBio()
+    {
+        isEditingBio = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditingBio = false;
+    }
+
+    private async Task SaveBio()
+    {
+        if (userProfile != null)
+        {
+            try
+            {
+                DbContext.UserProfiles.Update(userProfile);
+                await DbContext.SaveChangesAsync();
+                bioSavedMessage = "Bioteksti tallennettu onnistuneesti!";
+                isEditingBio = false;
+            }
+            catch (Exception ex)
+            {
+                bioSavedMessage = $"Virhe tallennuksessa: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task HandleProfileImageUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var uploadFolder = Path.Combine(Environment.WebRootPath, "profile-images");
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            var filePath = Path.Combine(uploadFolder, file.Name);
+
+            try
+            {
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream);
+
+                userProfile.ProfileImagePath = $"/profile-images/{file.Name}";
+                DbContext.UserProfiles.Update(userProfile);
+                await DbContext.SaveChangesAsync();
+
+                imageUploadMessage = "Profiilikuva päivitetty onnistuneesti!";
+            }
+            catch (Exception ex)
+            {
+                imageUploadMessage = $"Virhe profiilikuvan tallennuksessa: {ex.Message}";
+            }
+        }
+    }
+}

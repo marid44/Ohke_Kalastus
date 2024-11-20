@@ -11,14 +11,36 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241113140945_AddUsersTable")]
-    partial class AddUsersTable
+    [Migration("20241118065518_AddBioHistoryTable")]
+    partial class AddBioHistoryTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+
+            modelBuilder.Entity("KalastusWebsite.Models.BioHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BioText")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UserProfileId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserProfileId");
+
+                    b.ToTable("BioHistory");
+                });
 
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>
                 {
@@ -152,6 +174,38 @@ namespace KalastusWebsite.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProfileImagePath")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RegisteredAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("KalastusWebsite.Models.BioHistory", b =>
+                {
+                    b.HasOne("KalastusWebsite.Models.UserProfile", null)
+                        .WithMany("BioHistory")
+                        .HasForeignKey("UserProfileId");
+                });
+
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>
                 {
                     b.HasOne("KalastusWebsite.Models.Conversation", "Conversation")
@@ -174,6 +228,17 @@ namespace KalastusWebsite.Migrations
                     b.Navigation("Media");
                 });
 
+            modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>
+                {
+                    b.HasOne("KalastusWebsite.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("KalastusWebsite.Models.Conversation", b =>
                 {
                     b.Navigation("Comments");
@@ -182,6 +247,11 @@ namespace KalastusWebsite.Migrations
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>
+                {
+                    b.Navigation("BioHistory");
                 });
 #pragma warning restore 612, 618
         }

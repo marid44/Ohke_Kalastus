@@ -5,7 +5,7 @@
 namespace KalastusWebsite.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateUserModel : Migration
+    public partial class AddBioHistoryTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
