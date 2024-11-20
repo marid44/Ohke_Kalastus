@@ -1,7 +1,11 @@
 ﻿@page "/"
 @using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@using Microsoft.EntityFrameworkCore
 @inject UserSession UserSession
 @inject NavigationManager NavigationManager
+@inject AppDbContext _context
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
 
@@ -32,10 +36,37 @@
         <button class="btn-media" @onclick="NavigateToMedia">Lisää kuvia</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
     </div>
+
+    <div class="recent-conversations">
+        <h3>Uusimmat keskustelut</h3>
+        <div class="conversation-scroll-box">
+            @if (recentConversations != null && recentConversations.Any())
+            {
+                @foreach (var conversation in recentConversations)
+                {
+                    <div class="conversation-item" @onclick="() => NavigateToConversation(conversation.Id)">
+                        <h4>@conversation.Title</h4>
+                        <p class="conversation-meta">
+                            <span>@conversation.Username</span>
+                            <span>@conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                        </p>
+                        <p class="conversation-preview">
+                            @(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
+                                conversation.Content)
+                        </p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei keskusteluja.</p>
+            }
+        </div>
+    </div>
 </div>
 
 <style>
-    /* Yhteinen tyyli kaikille painikkeille */
+    /* Existing button styles */
     button {
         padding: 10px 20px;
         font-size: 1em;
@@ -48,71 +79,28 @@
 
     button:hover {
         transform: scale(1.05);
-        /* Korostettu hover-animaatio */
     }
 
-    /* Painikkeiden yksilölliset värit */
-    .btn-register {
+    .btn-register,
+    .btn-discussion,
+    .btn-view,
+    .btn-media,
+    .btn-profile,
+    .btn-gallery {
         background-color: #007bff;
-        /* Sininen */
         color: white;
     }
 
-    .btn-register:hover {
+    .btn-register:hover,
+    .btn-discussion:hover,
+    .btn-view:hover,
+    .btn-media:hover,
+    .btn-profile:hover,
+    .btn-gallery:hover {
         background-color: #0056b3;
     }
 
-    .btn-discussion {
-        background-color: #007bff;
-        /* Vihreä */
-        color: white;
-    }
-
-    .btn-discussion:hover {
-        background-color: #007bff;
-    }
-
-    .btn-view {
-        background-color: #007bff;
-        /* Keltainen */
-        color: rgb(255, 255, 255);
-    }
-
-    .btn-view:hover {
-        background-color: #007bff;
-    }
-
-    .btn-media {
-        background-color: #007bff;
-        /* Syaani */
-        color: white;
-    }
-
-    .btn-media:hover {
-        background-color: #007bff;
-    }
-
-    .btn-profile {
-        background-color: #007bff;
-        /* Harmaa */
-        color: white;
-    }
-
-    .btn-profile:hover {
-        background-color: #007bff;
-    }
-
-    .btn-gallery {
-        background-color: #007bff;
-        /* Tumma */
-        color: white;
-    }
-
-    .btn-gallery:hover {
-        background-color: #007bff;
-    }
-
-    /* Hero-osio */
+    /* Hero section */
     .hero {
         background-image: url('/kalastus banner.jpg');
         background-size: cover;
@@ -166,10 +154,75 @@
         justify-content: center;
         gap: 10px;
         margin-top: 20px;
+        margin-bottom: 30px;
+    }
+
+    /* New conversation list styles */
+    .recent-conversations {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+        text-align: left;
+    }
+
+    .conversation-scroll-box {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+    }
+
+    .conversation-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .conversation-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .conversation-item h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+
+    .conversation-meta {
+        font-size: 0.8em;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    .conversation-preview {
+        color: #444;
+        font-size: 0.9em;
+        margin: 0;
+        line-height: 1.4;
     }
 </style>
 
 @code {
+    private List<Conversation> recentConversations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        recentConversations = await _context.Conversations
+        .OrderByDescending(c => c.CreatedAt)
+        .Take(10)
+        .ToListAsync();
+    }
+
+    private void NavigateToConversation(int id)
+    {
+        NavigationManager.NavigateTo($"/conversation/{id}");
+    }
+
     private void NavigateToCreateDiscussion()
     {
         if (UserSession.IsLoggedIn)
@@ -202,4 +255,4 @@
     {
         NavigationManager.NavigateTo("/media-gallery");
     }
-}
+}>
