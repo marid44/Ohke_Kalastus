@@ -18,14 +18,18 @@
             <div class="media-item">
                 @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
                 {
-                    <video controls>
-                        <source src="@media.FilePath" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                    <a href="/image/@media.Id">
+                        <video controls>
+                            <source src="@media.FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </a>
                 }
                 else
                 {
-                    <img src="@media.FilePath" alt="Media kuva" />
+                    <a href="/image/@media.Id">
+                        <img src="@media.FilePath" alt="Media kuva" />
+                    </a>
                 }
 
                 <p>
