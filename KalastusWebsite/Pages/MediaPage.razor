@@ -182,7 +182,10 @@
 }
 else
 {
-    <p>Sinun täytyy kirjautua sisään ladataksesi mediaa.</p>
+    UserSession.RedirectUrl = "/add-media";
+     <!-- Tallenna tämän sivun osoite uudelleenohjausta varten -->
+    NavigationManager.NavigateTo("/login");
+     <!-- Ohjaa kirjautumissivulle -->
 }
 
 @code {
@@ -289,7 +292,6 @@ else
                 DbContext.MediaComments.Add(comment);
                 await DbContext.SaveChangesAsync();
 
-                // Päivitä kommentit tietokannasta uudelleen
                 media.Comments = await DbContext.MediaComments
                 .Where(c => c.MediaId == media.Id)
                 .ToListAsync();
