@@ -61,6 +61,36 @@
         commentError = null;
         comments.Add(newComment);
     }
+
+    private async Task UpvoteConversation()
+    {
+        if (conversation != null)
+        {
+            conversation.Upvotes++;
+            await _context.SaveChangesAsync(); // Save changes to the database
+        }
+    }
+
+    private async Task DownvoteConversation()
+    {
+        if (conversation != null)
+        {
+            conversation.Downvotes++;
+            await _context.SaveChangesAsync(); // Save changes to the database
+        }
+    }
+
+    private async Task UpvoteComment(Comment comment)
+    {
+        comment.Upvotes++;
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task DownvoteComment(Comment comment)
+    {
+        comment.Downvotes++;
+        await _context.SaveChangesAsync();
+    }
 }
 
 @if (conversation != null)
@@ -69,6 +99,12 @@
         <h2>@conversation.Title</h2>
         <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
         <p>@conversation.Content</p>
+
+        <!-- Voting Section for Conversation -->
+        <div class="voting">
+            <button class="btn btn-success" @onclick="UpvoteConversation">👍 @conversation.Upvotes</button>
+            <button class="btn btn-danger" @onclick="DownvoteConversation">👎 @conversation.Downvotes</button>
+        </div>
     </div>
 
     <h4>Kommentit</h4>
@@ -81,6 +117,14 @@
                 <div class="comment">
                     <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
                     <p>@comment.Text</p>
+
+                    <!-- Voting Section for Comments -->
+                    <div class="comment-voting">
+                        <button class="btn btn-outline-success btn-sm" @onclick="() => UpvoteComment(comment)">👍
+                            @comment.Upvotes</button>
+                        <button class="btn btn-outline-danger btn-sm" @onclick="() => DownvoteComment(comment)">👎
+                            @comment.Downvotes</button>
+                    </div>
                 </div>
             }
         </div>
@@ -92,7 +136,7 @@
 
     @if (UserSession.IsLoggedIn)
     {
-        <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
+        <EditForm Model="@this" OnValidSubmit="AddComment">
             <div class="form-group">
                 <label for="newComment">Add a comment:</label>
                 <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
@@ -126,6 +170,15 @@ else
         margin: 20px auto;
     }
 
+    .voting {
+        margin: 10px 0;
+    }
+
+    .voting button {
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
     .comments-section {
         margin-top: 20px;
     }
@@ -136,5 +189,13 @@ else
         border: 1px solid #ddd;
         border-radius: 5px;
         margin-bottom: 10px;
+    }
+
+    .comment-voting {
+        margin-top: 5px;
+    }
+
+    .comment-voting button {
+        margin-right: 5px;
     }
 </style>
