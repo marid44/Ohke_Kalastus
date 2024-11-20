@@ -36,6 +36,9 @@ namespace KalastusWebsite.Models
         public string Username { get; set; } // Kommentin kirjoittaja
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+        public int Upvotes { get; set; } = 0; 
+        public int Downvotes { get; set; } = 0; 
+
         // Navigaatio-ominaisuus takaisin keskusteluun
         public Conversation Conversation { get; set; }
     }
