@@ -1,4 +1,6 @@
 using KalastusWebsite.Models;
+using KalastusWebsite.Data;
+using System.Linq;
 
 namespace KalastusWebsite.Services
 {

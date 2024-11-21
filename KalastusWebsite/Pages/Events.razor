@@ -7,11 +7,13 @@
 <div>
     @if (UserSession.IsLoggedIn)
     {
-    <h3>Lisää uusi tapahtuma</h3>
+    <h3>Luo uusi tapahtuma</h3>
     <input @bind="NewEventTitle" placeholder="Otsikko" />
     <input type="date" @bind="NewEventDate" />
+    <p></p>
     <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
-    <button @onclick="AddEvent">Lisää tapahtuma</button>
+    <p></p>
+    <button @onclick="AddEvent">Lisää</button>
     }
     else
     {
