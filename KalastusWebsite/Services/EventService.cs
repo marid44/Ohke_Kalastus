@@ -6,25 +6,30 @@ namespace KalastusWebsite.Services
 {
     public class EventService
     {
-        private readonly List<Event> _events = new List<Event>();
+        private readonly AppDbContext _context;
+
+        public EventService(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public IEnumerable<Event> GetEvents() => _context.Events.ToList();
 
         public void AddEvent(Event newEvent)
         {
-            _events.Add(newEvent);
+            _context.Events.Add(newEvent);
+            _context.SaveChanges();
         }
 
-        public void RemoveEvent(int id, string username)
+        public void RemoveEvent(int id)
         {
-            var eventToRemove = _events.FirstOrDefault(e => e.Id == id && e.CreatedBy == username);
-            
-            if (eventToRemove != null)
+            var ev = _context.Events.Find(id);
+            if (ev != null)
             {
-                _events.Remove(eventToRemove);
+                _context.Events.Remove(ev);
+                _context.SaveChanges();
             }
-        }
-        public List<Event> GetEvents()
-        {
-            return _events;
         }
     }
 }
+

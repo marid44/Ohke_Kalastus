@@ -12,9 +12,9 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlite("Data Source=app.db"));
+    options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
-builder.Services.AddSingleton<EventService>();
+builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<KalastusWebsite.Services.UserSession>();
 
 
