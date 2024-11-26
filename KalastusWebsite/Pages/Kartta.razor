@@ -3,11 +3,9 @@
 @inject IConfiguration Configuration
 
 <h3>Fishing Map</h3>
-<div>
-    <input type="checkbox" id="toggleRivers" @onchange="ToggleRivers" />
-    <label for="toggleRivers">Show Rivers</label>
-    <input type="checkbox" id="toggleRoads" @onchange="ToggleRoads" />
-    <label for="toggleRoads">Show Roads</label>
+<div style="display:none;">
+    <input type="checkbox" id="toggleRivers" checked @onchange="ToggleRivers" />
+    <label for="toggleRivers">Map</label>
 </div>
 <div id="map" style="height: 500px; width: 100%;"></div>
 
@@ -20,6 +18,9 @@
         {
             apiKey = Configuration["Maanmittauslaitos:ApiKey"]; // Ensure API key is set in appsettings.json
             await JSRuntime.InvokeVoidAsync("initializeMap", apiKey);
+
+            // Automatically toggle the "Rivers" layer on
+            await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", true);
         }
     }
 
@@ -27,11 +28,5 @@
     {
         bool isChecked = (bool)e.Value;
         await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", isChecked);
-    }
-
-    private async Task ToggleRoads(ChangeEventArgs e)
-    {
-        bool isChecked = (bool)e.Value;
-        await JSRuntime.InvokeVoidAsync("toggleLayer", "roads", isChecked);
     }
 }

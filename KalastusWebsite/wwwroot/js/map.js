@@ -23,7 +23,7 @@ function initializeMap(apiKey) {
         worldCopyJump: false,
         maxZoom: 15,
         minZoom: 0
-    }).setView([63.2467777, 25.9209164], 5);
+    }).setView([63.2467777, 25.9209164], 15);
 
     // Vector Tiles - Maastokartta
     fetch(`https://avoin-karttakuva.maanmittauslaitos.fi/vectortiles/tilejson/maastokartta/1.0.0/maastokartta/default/v20/ETRS-TM35FIN/tilejson.json?api-key=${apiKey}`)
@@ -38,23 +38,6 @@ function initializeMap(apiKey) {
             const tileUrlTemplate = data.tiles[0];
 
             L.vectorGrid.protobuf(tileUrlTemplate, {
-                vectorTileLayerStyles: {
-                    symboli: { fillColor: "#ff7800", color: "#ff7800", weight: 0 },
-                    hallintoalue: { color: "#00ff00", weight: 0, fillOpacity: 0 },
-                    maasto_viiva: { color: "#666666", weight: 0 },
-                    vesisto_alue: { color: "#3388ff", fillColor: "#3388ff", weight: 1, fillOpacity: 0.8 },
-                    poi: { fillColor: "#000000", color: "#000000", weight: 0 },
-                    rakennelma: { color: "#8b4513", fillColor: "#8b4513", weight: 0 },
-                    maastoalue: { color: "#4CAF50", fillColor: "#4CAF50", weight: 0, fillOpacity: 0 },
-                    liikenne: { color: "#FF0000", weight: 2 },
-                    maankaytto: { color: "#FF00FF", weight: 1, fillOpacity: 0.5 },
-                    vesisto_viiva: { color: "#00BFFF", weight: 1 },
-                    korkeus: { color: "#A9A9A9", weight: 1 },
-                    nimisto: { color: "#000000", weight: 1 },
-                    rakennus: { color: "#8B4513", fillColor: "#A0522D", weight: 0, fillOpacity: 0 },
-                    alueraja: { color: "#FFD700", weight: 2 },
-                    selite: { color: "#808080", weight: 0 }
-                },
                 maxZoom: data.maxzoom || 15,
                 minZoom: data.minzoom || 0,
                 interactive: true
@@ -62,48 +45,8 @@ function initializeMap(apiKey) {
         })
         .catch(error => console.error("Error loading Maastokartta:", error));
 
-    // Vector Tiles - Taustakartta
-    fetch(`https://avoin-karttakuva.maanmittauslaitos.fi/vectortiles/tilejson/taustakartta/1.0.0/taustakartta/default/v20/ETRS-TM35FIN/tilejson.json?api-key=${apiKey}`)
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
-        .then(data => {
-            if (!data.tiles || !data.tiles[0]) {
-                throw new Error('No tile URL template in the response');
-            }
-            const tileUrlTemplate = data.tiles[0];
-
-            L.vectorGrid.protobuf(tileUrlTemplate, {
-                vectorTileLayerStyles: {
-                    symboli: { fillColor: "#ff7800", color: "#ff7800", weight: 0 },
-                    hallintoalue: { color: "#00ff00", weight: 0, fillOpacity: 0 },
-                    maasto_viiva: { color: "#666666", weight: 0 },
-                    vesisto_alue: { color: "#3388ff", fillColor: "#3388ff", weight: 1, fillOpacity: 1 },
-                    poi: { fillColor: "#000000", color: "#000000", weight: 0 },
-                    rakennelma: { color: "#8b4513", fillColor: "#8b4513", weight: 0 },
-                    maastoalue: { color: "#4CAF50", fillColor: "#4CAF50", weight: 0, fillOpacity: 0 },
-                    liikenne: { color: "#FF0000", weight: 0 },
-                    maankaytto: { color: "#FF00FF", weight: 1, fillOpacity: 5 },
-                    vesisto_viiva: { color: "#00BFFF", weight: 1 },
-                    korkeus: { color: "#A9A9A9", weight: 1 },
-                    nimisto: { color: "#000000", weight: 1 },
-                    maasto_piste: { color: "#FF4500", weight: 0 },
-                    rakennus: { color: "#8B4513", fillColor: "#A0522D", weight: 0, fillOpacity: 0 },
-                    alueraja: { color: "#FFD700", weight: 0 },
-                    selite: { color: "#808080", weight: 0 }
-                },
-                maxZoom: data.maxzoom || 15,
-                minZoom: data.minzoom || 0,
-                interactive: true
-            }).addTo(map);
-        })
-        .catch(error => console.error("Error loading Taustakartta:", error));
-
-    // Corrected WMTS URLs and structure
-    const wmtsUrl = 'https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0';
-
     // Rivers layer using WMTS
+    const wmtsUrl = 'https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0';
     riversLayer = L.tileLayer(`${wmtsUrl}/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png?api-key=${apiKey}`, {
         attribution: '&copy; Maanmittauslaitos',
         maxZoom: 15,
@@ -130,7 +73,7 @@ function initializeMap(apiKey) {
     L.control.layers(null, overlayMaps).addTo(map);
 
     // Geocoding implementation
-    fetch(`https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search?text=Tampere&api-key=${apiKey}`)
+    fetch(`https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search?text=Jyväskylä&api-key=${apiKey}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
