@@ -4,28 +4,155 @@
 @inject AppDbContext _context
 @inject NavigationManager NavigationManager
 
-<h3>Rekisteröidy</h3>
+<div class="register-container">
+    <div class="register-box">
+        <h3>Rekisteröidy</h3>
+        <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label>Käyttäjänimi (näyttönimi):</label>
+                <InputText @bind-Value="newUser.Username" class="form-control" placeholder="Enter your username" />
+                <ValidationMessage For="@(() => newUser.Username)" />
+            </div>
+            <div class="form-group">
+                <label>Sähköposti:</label>
+                <InputText @bind-Value="newUser.Email" class="form-control" placeholder="Enter your email" />
+                <ValidationMessage For="@(() => newUser.Email)" />
+            </div>
+            <div class="form-group">
+                <label>Salasana:</label>
+                <InputText @bind-Value="newUser.Password" class="form-control" type="password"
+                    placeholder="Enter your password" />
+                <ValidationMessage For="@(() => newUser.Password)" />
+            </div>
+            <button class="btn btn-primary btn-submit" type="submit">Register</button>
+        </EditForm>
+    </div>
+</div>
 
-<EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <div>
-        <label>Käyttäjänimi (näyttönimi):</label>
-        <InputText @bind-Value="newUser.Username" class="form-control" />
-        <ValidationMessage For="@(() => newUser.Username)" />
-    </div>
-    <div>
-        <label>Sähköposti:</label>
-        <InputText @bind-Value="newUser.Email" class="form-control" />
-        <ValidationMessage For="@(() => newUser.Email)" />
-    </div>
-    <div>
-        <label>Salasana:</label>
-        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
-        <ValidationMessage For="@(() => newUser.Password)" />
-    </div>
-    <button class="btn btn-primary" type="submit">Register</button>
-</EditForm>
+<style>
+    /* Keskittää rekisteröintiboksin */
+    .register-container {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        /* Vaalean harmaa tausta */
+        margin: 0;
+    }
+
+    /* Rekisteröintiboksi taustakuvalla */
+    .register-box {
+        background: url('/kalastus%20banner.jpg') no-repeat center center;
+        background-size: cover;
+        border-radius: 25px;
+        padding: 50px;
+        width: 450px;
+        height: 650px;
+        box-shadow: 0 15px 35px rgb(15, 15, 15);
+        /* Musta varjo ympärillä */
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+
+    /* Musta kerros tekstin ja kuvan kontrastille */
+    .register-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        /* Tumma kerros kuvan päälle */
+        border-radius: 25px;
+        z-index: 1;
+    }
+
+    .register-box h3,
+    .register-box .form-group,
+    .register-box button {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Otsikko */
+    .register-box h3 {
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    /* Lomakekentät */
+    .form-group {
+        margin-bottom: 25px;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #ddd;
+        text-transform: uppercase;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.2);
+        /* Läpinäkyvä kenttä */
+        color: white;
+        font-size: 16px;
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: #aaa;
+        font-style: italic;
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.3);
+        /* Hieman kirkkaampi kun valittu */
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        /* Sininen varjo */
+    }
+
+    /* Lähetä-painike */
+    .btn-submit {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 25px;
+        background: #28a745;
+        /* Vihreä painike */
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        margin-top: 50px;
+    }
+
+    .btn-submit:hover {
+        background: #218838;
+        transform: translateY(-3px);
+        /* Nousee hieman hoverilla */
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+        /* Palaa alkuperäiseen kun klikattu */
+    }
+</style>
 
 @code {
     private User newUser = new User();

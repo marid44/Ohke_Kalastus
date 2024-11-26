@@ -28,7 +28,10 @@
                     }
                 </a>
 
-                <p><strong>Lähettänyt:</strong> @media.UploadedBy</p>
+                <!-- Lähettäjän nimi on linkitetty käyttäjän profiiliin -->
+                <p><strong>Lähettänyt:</strong>
+                    <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
+                </p>
 
                 <div class="vote-buttons">
                     <button @onclick="() => ToggleVote(media.Id, true)"
