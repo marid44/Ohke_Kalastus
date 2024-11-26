@@ -70,7 +70,8 @@ function initializeMap(apiKey) {
         "Roads": roadsLayer
     };
 
-    L.control.layers(null, overlayMaps).addTo(map);
+    //toggle switc h right corner
+    //L.control.layers(null, overlayMaps).addTo(map);
 
     // Geocoding implementation
     fetch(`https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search?text=Jyväskylä&api-key=${apiKey}`)
