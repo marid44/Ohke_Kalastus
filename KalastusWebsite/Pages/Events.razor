@@ -7,13 +7,13 @@
 <div>
     @if (UserSession.IsLoggedIn)
     {
-    <h3>Luo uusi tapahtuma</h3>
-    <input @bind="NewEventTitle" placeholder="Otsikko" />
-    <input type="date" @bind="NewEventDate" />
-    <p></p>
-    <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
-    <p></p>
-    <button @onclick="AddEvent">Lisää</button>
+        <h3>Luo uusi tapahtuma</h3>
+        <input @bind="NewEventTitle" placeholder="Otsikko" />
+        <input type="date" @bind="NewEventDate" />
+        <p></p>
+        <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
+        <p></p>
+        <button @onclick="AddEvent">Lisää</button>
     }
     else
     {
@@ -34,10 +34,11 @@
                     <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
                     @ev.Description<br />
                     <em>Luonut: @ev.CreatedBy</em>
-                    @if (ev.CreatedBy == UserSession.Username)
+                    @if (UserSession.Username == ev.CreatedBy || UserSession.Role == "Admin")
                     {
-                        <button @onclick="() => RemoveEvent(ev.Id)">Poista</button>
+                        <button @onclick="() => RemoveEvent(ev.Id, UserSession.Username, UserSession.Role)">Poista</button>  <!-- Poista-nappi näkyy vain Adminille -->
                     }
+
                 </li>
             }
         </ul>
@@ -52,6 +53,15 @@
     private string NewEventTitle = string.Empty;
     private DateTime NewEventDate = DateTime.Now;
     private string NewEventDescription = string.Empty;
+
+    // Väliaikainen lista tapahtumista
+    private List<KalastusWebsite.Models.Event> events = new();
+
+    protected override void OnInitialized()
+    {
+        // Lataa tapahtumat heti komponentin alustuksessa
+        events = EventService.GetEvents().ToList();
+    }
 
     private void AddEvent()
     {
@@ -72,21 +82,22 @@
 
         EventService.AddEvent(newEvent);
 
+        // Päivitä tapahtumien lista
+        events = EventService.GetEvents().ToList();
+
         // Tyhjennetään syöttökentät
         NewEventTitle = string.Empty;
         NewEventDate = DateTime.Now;
         NewEventDescription = string.Empty;
     }
 
-    private void RemoveEvent(int id)
-    {
-        if (!UserSession.IsLoggedIn)
-        {
-            // Käyttäjä ei ole kirjautunut, estä poisto
-            Console.WriteLine("Vain kirjautuneet käyttäjät voivat poistaa tapahtumia!");
-            return;
-        }
+    private void RemoveEvent(int id, string username, string role)
 
-        //EventService.RemoveEvent(id, UserSession.Username);
+    {
+    
+        EventService.RemoveEvent(id, username, role);
+
+        // Päivitä tapahtumien lista poiston jälkeen
+        events = EventService.GetEvents().ToList();
     }
 }

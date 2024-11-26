@@ -1,6 +1,7 @@
 using KalastusWebsite.Models;
 using KalastusWebsite.Data;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace KalastusWebsite.Services
 {
@@ -21,15 +22,18 @@ namespace KalastusWebsite.Services
             _context.SaveChanges();
         }
 
-        public void RemoveEvent(int id)
+        public void RemoveEvent(int id, string username, string role)
         {
             var ev = _context.Events.Find(id);
-            if (ev != null)
+            if (ev != null && (role == "Admin" || ev.CreatedBy == username))
             {
                 _context.Events.Remove(ev);
                 _context.SaveChanges();
             }
+            else
+            {
+                Console.WriteLine("Sinulla ei ole oikeuksia poistaa tätä tapahtumaa.");
+            }
         }
     }
 }
-
