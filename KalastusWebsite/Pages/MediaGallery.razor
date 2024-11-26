@@ -18,17 +18,26 @@
             <div class="media-item">
                 @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
                 {
-                    <video controls>
-                        <source src="@media.FilePath" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                    <a href="/image/@media.Id">
+                        <video controls>
+                            <source src="@media.FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </a>
                 }
                 else
                 {
-                    <img src="@media.FilePath" alt="Media kuva" />
+                    <a href="/image/@media.Id">
+                        <img src="@media.FilePath" alt="Media kuva" />
+                    </a>
                 }
 
-                <p><strong>Lähettänyt:</strong> @media.UploadedBy</p>
+                <p>
+                    <strong>Lähettänyt:</strong>
+                    <a href="/profile/@media.UploadedBy" style="color: #007bff; text-decoration: none;">
+                        @media.UploadedBy
+                    </a>
+                </p>
             </div>
         }
     </div>
@@ -60,6 +69,10 @@ else
     .media-item video {
         max-width: 100%;
         border-radius: 4px;
+    }
+
+    .media-item a:hover {
+        text-decoration: underline;
     }
 </style>
 
