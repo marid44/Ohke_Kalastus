@@ -12,18 +12,19 @@
             <ValidationSummary />
             <div class="form-group">
                 <label>Käyttäjänimi (näyttönimi):</label>
-                <InputText @bind-Value="newUser.Username" class="form-control" placeholder="Enter your username" />
+                <InputText @bind-Value="newUser.Username" class="form-control" placeholder="Krjoita nimesi" />
                 <ValidationMessage For="@(() => newUser.Username)" />
             </div>
             <div class="form-group">
                 <label>Sähköposti:</label>
-                <InputText @bind-Value="newUser.Email" class="form-control" placeholder="Enter your email" />
+                <InputText @bind-Value="newUser.Email" class="form-control"
+                    placeholder="Kirjoita sähköpostiosoitteesi" />
                 <ValidationMessage For="@(() => newUser.Email)" />
             </div>
             <div class="form-group">
                 <label>Salasana:</label>
-                <InputText @bind-Value="newUser.Password" class="form-control" type="password"
-                    placeholder="Enter your password" />
+                <InputText @bind-Value="newUser.Password" class="form-control" type="salasana"
+                    placeholder="Kirjoita salasanasi" />
                 <ValidationMessage For="@(() => newUser.Password)" />
             </div>
             <button class="btn btn-primary btn-submit" type="submit">Rekisteröidy</button>
