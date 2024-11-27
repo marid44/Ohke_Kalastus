@@ -190,7 +190,7 @@
     .profile-container {
         max-width: 600px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 10px;
         background-color: white;
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -218,32 +218,86 @@
     .profile-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 0px;
+        justify-content: flex-start;
+        /* Kohdistetaan sisältö vasempaan reunaan */
+        gap: 20px;
+        /* Väli kuvan ja bio-tekstin välillä */
         margin-bottom: 20px;
     }
 
+    .profile-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        /* Kohdistetaan teksti vasemmalle */
+        text-align: left;
+        max-width: 300px;
+        /* Määritä bio-tekstin maksimileveys */
+    }
+
     .profile-picture-container {
+        margin-right: 20px;
+        /* Lisää väliä profiilikuvan oikealle puolelle */
+    }
+
+    .profile-picture-container {
+        position: relative;
         width: 140px;
+        /* Aseta säiliön leveys */
         height: 140px;
+        /* Aseta säiliön korkeus */
         border-radius: 50%;
+        /* Luo ympyrän muoto */
         overflow: hidden;
+        /* Rajaa sisällön ympyrän sisään */
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: #f0f0f0;
-        box-shadow: 0 4px 8px rgba(15, 15, 15, 0.772);
+        /* Taustaväri, jos kuva ei lataudu */
     }
 
     .profile-picture {
         width: 140px;
+        /* Kuvan leveys */
         height: 140px;
+        /* Kuvan korkeus */
         object-fit: cover;
-        border-radius: 50%;
+        /* Skaalaa kuva ympyrän täyttämiseksi */
+        transition: transform 0.4s ease;
+        /* Sulava hover-efekti */
     }
 
-    .profile-picture:hover {
-        transform: scale(1.1);
+    .profile-picture-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(128, 128, 128, 0.5);
+        /* Harmaa hover-efekti */
+        border-radius: 50%;
+        opacity: 0;
+        /* Piilota väri normaalisti */
+        transition: opacity 0.4s ease;
+        /* Sujuva siirtymä */
+        pointer-events: none;
+        /* Ei vaikuta käyttäjän vuorovaikutukseen */
+    }
+
+    .profile-picture-container:hover::after {
+        opacity: 0.8;
+        /* Näkyy hoverilla */
+    }
+
+    .profile-picture-container:hover .profile-picture {
+        transform: scale(1.05);
+        /* Zoomaa hieman hoverilla */
+        cursor: pointer;
+        /* Vaihtaa kohdistimen osoittimeksi */
     }
 
     .hidden-input {
@@ -255,19 +309,22 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        align-items: center;
-        text-align: center;
+        align-items: flex-start;
+        /* Kohdistaa tekstin vasemmalle */
+        text-align: left;
+        max-width: 300px;
+        /* Määritä maksimi leveys bio-tekstille */
     }
 
     .bio-display-box {
-        width: 100%;
-        max-width: 300px;
+        width: 123%;
+        max-width: 500px;
         background-color: white;
         border-radius: 10px;
         padding: 10px;
         box-shadow: 0 3px 10px rgba(15, 15, 15, 0.434);
         text-align: center;
-        margin: 10px center 40px center;
+        margin: 10px auto 40px center;
     }
 
     .bio-display-box p {
@@ -314,10 +371,11 @@
     .media-gallery {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin: 10px center;
-        padding: 1;
-        max-width: 500px;
+        gap: 20px;
+        margin: left 20px;
+        padding: 10;
+        max-width: 550px;
+
     }
 
     .media-item {
@@ -326,7 +384,8 @@
         padding-top: 100%;
         overflow: hidden;
         background-color: #f0f0f0;
-        border-radius: 5px;
+        border-radius: 10px;
+        box-shadow: 0 3px 5px rgba(15, 15, 15, 0.756);
     }
 
     .media-item:hover {

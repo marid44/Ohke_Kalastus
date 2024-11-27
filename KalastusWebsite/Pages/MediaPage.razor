@@ -10,87 +10,198 @@
 @using Microsoft.EntityFrameworkCore
 
 <style>
-    .upload-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
+    /* Lisää kommentti -painike */
     .btn-primary {
-        background-color: #4CAF50;
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
         color: white;
-    }
-
-    .btn-delete {
-        background-color: #f44336;
-        color: white;
+        background-color: #007bff;
+        /* Sininen väri */
         border: none;
-        padding: 5px 10px;
-        border-radius: 4px;
+        border-radius: 5px;
         cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        margin-top: 15px;
     }
 
+    .btn-primary:hover {
+        background-color: #0056b3;
+        /* Tummempi sininen hover-efekti */
+        transform: scale(1.05);
+    }
+
+    /* Poista-painike */
+    .btn-delete {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: rgb(255, 255, 255);
+        background-color: #000000;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-delete:hover {
+        background-color: #b43434;
+        /* Tummempi punainen hover-efekti */
+        transform: scale(1.05);
+        /* Kevyt zoomaus */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-delete:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 53, 0.4);
+        /* Korostus focus-tilassa */
+    }
+
+    /* Lomakecontainer */
+    .upload-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f3f4f6, #e8eaf6);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    /* Lomakeotsikko */
+    .upload-container h2 {
+        font-weight: 700;
+        font-size: 20px;
+        color: rgb(46, 109, 227);
+        margin-bottom: 20px;
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+
+    /* Piilotettu tiedostokenttä */
+    .form-group input[type="file"] {
+        display: none;
+    }
+
+    /* Mukautettu tiedostovalintapainike */
+    .custom-file-label {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        background-color: #007bff;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .custom-file-label:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+
+    /* Lataa-painike */
+    .btn-primary {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        margin-top: 15px;
+    }
+
+    .btn-primary:hover {
+        background-color: #004895;
+        transform: scale(1.05);
+    }
+
+    /* Ladatut mediat otsikko */
+    .upload-container h3 {
+        font-weight: 500;
+        font-size: 20px;
+        color: #333;
+        margin-top: 30px;
+    }
+
+    /* Media-galleria */
     .media-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* 4 elementtiä per rivi */
+        gap: 15px;
+        /* Väli elementtien välillä */
         margin-top: 20px;
+        padding: 10px;
     }
 
     .media-item {
-        border: 1px solid #ccc;
+        border: 1px solid #ddd;
         border-radius: 8px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         padding: 10px;
-        width: 250px;
         text-align: center;
-        background-color: white;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .media-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
 
     .media-item video,
     .media-item img {
-        width: 100%;
-        border-radius: 4px;
-    }
-
-    textarea {
-        width: 100%;
-        height: 80px;
-        margin-top: 10px;
+        max-width: 100%;
+        max-height: 150px;
+        border-radius: 6px;
         margin-bottom: 10px;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        resize: none;
     }
 
+    /* Kommentit */
     ul {
         list-style-type: none;
         padding: 0;
-        margin: 0;
+        margin: 10px 0;
     }
 
     ul li {
         margin-bottom: 10px;
+        font-size: 14px;
+        color: #555;
     }
 
+    ul li strong {
+        font-weight: bold;
+        color: #333;
+    }
+
+    ul li small {
+        font-size: 12px;
+        color: #888;
+        margin-left: 10px;
+    }
+
+    /* Linkit */
     a {
         color: #007bff;
         text-decoration: none;
-        cursor: pointer;
+        font-weight: bold;
     }
 
     a:hover {
         text-decoration: underline;
     }
 </style>
+
 
 @if (UserSession?.IsLoggedIn ?? false)
 {
@@ -113,6 +224,11 @@
                     <label for="file">Valitse tiedosto:</label>
                     <InputFile OnChange="HandleFileSelected" accept="image/*,video/mp4" />
                 </div>
+                <div class="form-group">
+                    <label class="custom-file-label" for="fileInput">Valitse tiedosto</label>
+                    <InputFile id="fileInput" OnChange="HandleFileSelected" accept="image/*,video/mp4" />
+                </div>
+
 
                 <button type="submit" class="btn btn-primary" disabled="@(!CanUpload)">Lataa</button>
             </EditForm>
