@@ -48,8 +48,7 @@
         UserSession.Username = string.Empty;
         UserSession.IsLoggedIn = false;
 
-        // Redirect to home or login page
-        NavigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 
     private void NavigateToRegister()
