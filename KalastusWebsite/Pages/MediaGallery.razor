@@ -1,0 +1,93 @@
+@page "/media-gallery"
+@using KalastusWebsite.Services
+@using KalastusWebsite.Models
+@using KalastusWebsite.Data
+@inject AppDbContext DbContext
+@inject UserSession UserSession
+@inject NavigationManager NavigationManager
+@inject IWebHostEnvironment Environment
+@using Microsoft.EntityFrameworkCore
+
+<h1>Selaa käyttäjien kuvia ja videoita</h1>
+
+@if (mediaFiles.Any())
+{
+    <div class="media-gallery">
+        @foreach (var media in mediaFiles)
+        {
+            <div class="media-item">
+                @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="/image/@media.Id">
+                        <video controls>
+                            <source src="@media.FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </a>
+                }
+                else
+                {
+                    <a href="/image/@media.Id">
+                        <img src="@media.FilePath" alt="Media kuva" />
+                    </a>
+                }
+
+                <p>
+                    <strong>Lähettänyt:</strong>
+                    <a href="/profile/@media.UploadedBy" style="color: #007bff; text-decoration: none;">
+                        @media.UploadedBy
+                    </a>
+                </p>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>Ei ladattuja kuvia tai videoita.</p>
+}
+
+<style>
+    .media-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .media-item {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        width: 250px;
+        text-align: center;
+        background-color: white;
+    }
+
+    .media-item img,
+    .media-item video {
+        max-width: 100%;
+        border-radius: 4px;
+    }
+
+    .media-item a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+@code {
+    private List<Media> mediaFiles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            mediaFiles = await DbContext.MediaFiles.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Virhe ladattaessa medioita: {ex.Message}");
+        }
+    }
+}

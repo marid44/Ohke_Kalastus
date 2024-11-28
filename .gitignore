@@ -68,3 +68,7 @@ Icon?
 *.db
 *.db-shm
 *.db-wal
+
+# Ignore profile images
+
+KalastusWebsite/wwwroot/profile-images/

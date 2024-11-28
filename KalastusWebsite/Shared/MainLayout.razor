@@ -11,6 +11,8 @@
             @if (UserSession.IsLoggedIn)
             {
                 <button class="btn btn-link" @onclick="Logout">Kirjaudu ulos</button>
+                <button class="btn btn-link" @onclick="NavigateToProfile">Profiili</button>
+                
             }
             @if (!UserSession.IsLoggedIn)
             {
@@ -57,5 +59,18 @@
     private void NavigateToLogin()
     {
         NavigationManager.NavigateTo("/login");
+    }
+
+    private void NavigateToProfile()
+    {
+        if (UserSession.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo($"/profile/{UserSession.Username}");
+        }
+        else
+        {
+            UserSession.RedirectUrl = "/profile";
+            NavigationManager.NavigateTo("/login");
+        }
     }
 }
