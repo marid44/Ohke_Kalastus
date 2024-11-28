@@ -2,155 +2,54 @@
 @using KalastusWebsite.Services
 @using KalastusWebsite.Models
 @using KalastusWebsite.Data
+@using Microsoft.EntityFrameworkCore
 @inject AppDbContext DbContext
 @inject UserSession UserSession
 @inject NavigationManager NavigationManager
-@using Microsoft.EntityFrameworkCore
 @inject IWebHostEnvironment Environment
 
-<style>
-    .profile-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        background-color: #f9f9f9;
-    }
-
-    .profile-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .profile-image {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        margin-right: 20px;
-        border: 2px solid #ccc;
-    }
-
-    .profile-info h2 {
-        margin: 0;
-    }
-
-    .bio-display-box {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        background-color: #f1f1f1;
-    }
-
-    .textarea-container {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        resize: none;
-        background-color: white;
-        margin-bottom: 10px;
-    }
-
-    .btn-primary {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .btn-delete {
-        background-color: red;
-        color: white;
-        padding: 5px 10px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .media-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        margin-top: 20px;
-    }
-
-    .media-item {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 10px;
-        width: 250px;
-        text-align: center;
-        background-color: white;
-    }
-
-    .media-item img,
-    .media-item video {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 4px;
-        object-fit: cover;
-    }
-
-    .media-item img:hover,
-    .media-item video:hover {
-        cursor: pointer;
-        opacity: 0.9;
-    }
-</style>
-
 <div class="profile-container">
+    <!-- Takaisin-painike -->
+    <div class="back-button-container">
+        <button class="back-button" @onclick="NavigateToHome">←</button>
+    </div>
+
     @if (userProfile != null)
     {
         <div class="profile-header">
-            <div>
-                <img src="@userProfile.ProfileImagePath" alt="Profiilikuva" class="profile-image" />
-                @if (UserSession.Username == userProfile.User?.Username)
-                {
-                    <div>
-                        <InputFile OnChange="HandleProfileImageUpload" />
-                        @if (!string.IsNullOrEmpty(imageUploadMessage))
-                        {
-                            <p style="color: green;">@imageUploadMessage</p>
-                        }
-                    </div>
-                }
+            <!-- Profiilikuva -->
+            <div class="profile-picture-container">
+                <label for="fileInput">
+                    <img src="@userProfile.ProfileImagePath" alt="Profiilikuva" class="profile-picture" />
+                </label>
+                <InputFile id="fileInput" OnChange="HandleProfileImageUpload" class="hidden-input" />
             </div>
+
+            <!-- Bio ja nimi -->
             <div class="profile-info">
                 <h2>@userProfile.User?.Username</h2>
+                <div class="bio-display-box">
+                    @if (isEditingBio)
+                    {
+                        <textarea class="textarea-container" @bind="userProfile.Bio"></textarea>
+                        <button class="btn-primary" @onclick="SaveBio">Tallenna</button>
+                        <button class="btn-delete" @onclick="CancelEdit">Peruuta</button>
+                    }
+                    else
+                    {
+                        <p>@userProfile.Bio</p>
+                        @if (UserSession.Username == userProfile.User?.Username)
+                        {
+                            <button class="btn-primary" @onclick="EditBio">Muokkaa</button>
+                        }
+                    }
+                </div>
             </div>
         </div>
 
-        <!-- Bio Section -->
-        <div class="bio-display-box">
-            <h3>Bio</h3>
-            @if (isEditingBio)
-            {
-                <textarea class="textarea-container" @bind="userProfile.Bio"></textarea>
-                <button class="btn-primary" @onclick="SaveBio">Tallenna</button>
-                <button class="btn-delete" @onclick="CancelEdit">Peruuta</button>
-            }
-            else
-            {
-                <p>@userProfile.Bio</p>
-                @if (UserSession.Username == userProfile.User?.Username)
-                {
-                    <button class="btn-primary" @onclick="EditBio">Muokkaa</button>
-                }
-            }
-            <p style="color: green;">@(bioSavedMessage ?? "")</p>
-        </div>
-
-        <!-- Media Section -->
+        <!-- Media-osio -->
         <div class="media-section">
-            <h3>
-                <a href="/add-media" style="text-decoration: none; color: inherit;">Ladatut mediat:</a>
-            </h3>
+            <h3>Ladatut mediat:</h3>
             @if (userMedia.Any())
             {
                 <div class="media-gallery">
@@ -176,14 +75,13 @@
             }
             else
             {
-                <p>Käyttäjällä ei ole ladattuja medioita.</p>
+                <p class="no-media">Käyttäjällä ei ole ladattuja medioita.</p>
             }
         </div>
-
     }
     else
     {
-        <p style="color: red;">@(bioSavedMessage ?? "Käyttäjää ei löytynyt.")</p>
+        <p class="error-message">Käyttäjää ei löytynyt.</p>
     }
 </div>
 
@@ -236,6 +134,12 @@
                 bioSavedMessage = $"Virhe profiilin lataamisessa: {ex.Message}";
             }
         }
+    }
+
+
+    private void NavigateToHome()
+    {
+        NavigationManager.NavigateTo("/"); // Takaisin etusivulle
     }
 
     private void EditBio()
@@ -297,3 +201,234 @@
         }
     }
 }
+
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 10px;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    .back-button-container {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .back-button {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #007bff;
+        cursor: pointer;
+    }
+
+    .back-button:hover {
+        text-decoration: underline;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        /* Kohdistetaan sisältö vasempaan reunaan */
+        gap: 20px;
+        /* Väli kuvan ja bio-tekstin välillä */
+        margin-bottom: 20px;
+    }
+
+    .profile-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        /* Kohdistetaan teksti vasemmalle */
+        text-align: left;
+        max-width: 300px;
+        /* Määritä bio-tekstin maksimileveys */
+    }
+
+    .profile-picture-container {
+        margin-right: 20px;
+        /* Lisää väliä profiilikuvan oikealle puolelle */
+    }
+
+    .profile-picture-container {
+        position: relative;
+        width: 140px;
+        /* Aseta säiliön leveys */
+        height: 140px;
+        /* Aseta säiliön korkeus */
+        border-radius: 50%;
+        /* Luo ympyrän muoto */
+        overflow: hidden;
+        /* Rajaa sisällön ympyrän sisään */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+        /* Taustaväri, jos kuva ei lataudu */
+    }
+
+    .profile-picture {
+        width: 140px;
+        /* Kuvan leveys */
+        height: 140px;
+        /* Kuvan korkeus */
+        object-fit: cover;
+        /* Skaalaa kuva ympyrän täyttämiseksi */
+        transition: transform 0.4s ease;
+        /* Sulava hover-efekti */
+    }
+
+    .profile-picture-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(128, 128, 128, 0.5);
+        /* Harmaa hover-efekti */
+        border-radius: 50%;
+        opacity: 0;
+        /* Piilota väri normaalisti */
+        transition: opacity 0.4s ease;
+        /* Sujuva siirtymä */
+        pointer-events: none;
+        /* Ei vaikuta käyttäjän vuorovaikutukseen */
+    }
+
+    .profile-picture-container:hover::after {
+        opacity: 0.8;
+        /* Näkyy hoverilla */
+    }
+
+    .profile-picture-container:hover .profile-picture {
+        transform: scale(1.05);
+        /* Zoomaa hieman hoverilla */
+        cursor: pointer;
+        /* Vaihtaa kohdistimen osoittimeksi */
+    }
+
+    .hidden-input {
+        display: none;
+    }
+
+    .profile-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        /* Kohdistaa tekstin vasemmalle */
+        text-align: left;
+        max-width: 300px;
+        /* Määritä maksimi leveys bio-tekstille */
+    }
+
+    .bio-display-box {
+        width: 123%;
+        max-width: 500px;
+        background-color: white;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 3px 10px rgba(15, 15, 15, 0.434);
+        text-align: center;
+        margin: 10px auto 40px center;
+    }
+
+    .bio-display-box p {
+        font-size: 16px;
+        color: #555;
+        margin: 0;
+        line-height: 1.5;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    .btn-primary {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-delete {
+        padding: 10px 20px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-delete:hover {
+        background-color: #a71d2a;
+    }
+
+    .media-section {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .media-gallery {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin: left 20px;
+        padding: 10;
+        max-width: 550px;
+
+    }
+
+    .media-item {
+        position: relative;
+        width: 100%;
+        padding-top: 100%;
+        overflow: hidden;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        box-shadow: 0 3px 5px rgba(15, 15, 15, 0.756);
+    }
+
+    .media-item:hover {
+        transform: scale(1.1);
+    }
+
+    .media-item img,
+    .media-item video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        margin: 0;
+        padding: 0;
+        display: block;
+        border-radius: 5px;
+    }
+
+    .success-message {
+        color: green;
+        font-size: 14px;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 14px;
+    }
+</style>
