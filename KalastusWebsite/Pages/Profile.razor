@@ -103,16 +103,31 @@
                 .Include(up => up.User)
                 .FirstOrDefaultAsync(up => up.User!.Username == username);
 
-                if (userProfile != null)
+                if (userProfile == null)
                 {
-                    userMedia = await DbContext.MediaFiles
-                    .Where(m => m.UploadedBy == username)
-                    .ToListAsync();
+                    var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Username == username);
+                    if (user != null)
+                    {
+                        userProfile = new UserProfile
+                            {
+                                UserId = user.Id,
+                                Bio = "Tervetuloa profiiliini!",
+                                ProfileImagePath = "/images/default-profile.png"
+                            };
+
+                        DbContext.UserProfiles.Add(userProfile);
+                        await DbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        bioSavedMessage = "Käyttäjää ei löytynyt.";
+                        return;
+                    }
                 }
-                else
-                {
-                    bioSavedMessage = "Käyttäjää ei löytynyt.";
-                }
+
+                userMedia = await DbContext.MediaFiles
+                .Where(m => m.UploadedBy == username)
+                .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -120,6 +135,7 @@
             }
         }
     }
+
 
     private void NavigateToHome()
     {
