@@ -18,8 +18,12 @@
     }
 
     .image-display {
+        width: auto;
+        height: auto;
         max-width: 100%;
+        /* Rajaa kuvan leveyttä, mutta säilyttää mittasuhteet */
         max-height: 500px;
+        /* Rajaa kuvan korkeutta, mutta säilyttää mittasuhteet */
         margin-bottom: 20px;
         border-radius: 8px;
     }
@@ -64,7 +68,6 @@
     @if (image != null)
     {
         <img src="@image.FilePath" alt="Kuva" class="image-display" />
-        <h2>@image.FileName</h2>
 
         <!-- Kommenttiosio -->
         <div class="comment-section">
