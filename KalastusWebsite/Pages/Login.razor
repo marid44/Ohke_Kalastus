@@ -11,6 +11,12 @@
     <div class="login-box">
         <h3>Kirjaudu</h3>
         <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            @if (!string.IsNullOrEmpty(loginError))
+            {
+                <div class="alert alert-danger">
+                    @loginError
+                </div>
+            }
             <div class="form-group">
                 <label for="email">Sähköposti</label>
                 <InputText id="email" class="form-control" @bind-Value="loginModel.Email"
@@ -23,6 +29,7 @@
             </div>
             <button class="btn btn-primary btn-submit" type="submit">KIRJAUDU</button>
         </EditForm>
+
     </div>
 </div>
 
@@ -36,6 +43,8 @@
         background-color: #f8f9fa;
         /* Vaalean harmaa tausta */
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
     /* Kirjautumisboksi taustakuvalla */
@@ -44,13 +53,18 @@
         background-size: cover;
         border-radius: 25px;
         padding: 50px;
-        width: 450px;
-        height: 600px;
+        width: 100%;
+        max-width: 400px;
+        /* Maksimileveys */
+        max-height: 600px;
+        /* Maksimikorkeus */
         box-shadow: 0 15px 35px rgb(15, 15, 15);
         /* Musta varjo ympärillä */
         text-align: center;
         color: white;
         position: relative;
+        overflow: hidden;
+        /* Piilottaa ylimenevät osat */
     }
 
     /* Musta kerros tekstin ja kuvan kontrastille */
@@ -69,17 +83,31 @@
 
     .login-box h3,
     .login-box .form-group,
-    .login-box button {
+    .login-box button,
+    .alert-danger {
         position: relative;
         z-index: 2;
     }
 
-    /* Otsikko */
-    .login-box h3 {
-        margin-bottom: 30px;
-        font-size: 28px;
-        font-weight: bold;
-        color: #fff;
+    /* Virheilmoitus laatikon sisälle */
+    .alert-danger {
+        width: calc(100% - 30px);
+        /* Täyttää boksin lähes koko leveyden */
+        margin: 0 auto 20px;
+        /* Keskitetään ja jätetään tilaa alaosaan */
+        padding: 15px;
+        border: 2px solid rgb(255, 0, 0);
+        /* Kirkas punainen reunus */
+        border-radius: 25px;
+        background: rgba(0, 0, 0, 0.7);
+        /* Tumma tausta */
+        color: #ffffff;
+        /* Valkoinen teksti */
+        font-size: 16px;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        /* Punainen varjo */
+        font-style: italic;
     }
 
     /* Lomakekentät */
@@ -133,7 +161,7 @@
         text-transform: uppercase;
         cursor: pointer;
         transition: background 0.3s, transform 0.2s;
-        margin-top: 50px;
+        margin-top: 30px;
     }
 
     .btn-submit:hover {
@@ -154,16 +182,25 @@
 
     private async Task HandleLogin()
     {
+        // Tarkista, onko käyttäjä olemassa tietokannassa
         var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
-        if (user != null && BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
+        if (user == null)
         {
+            // Käyttäjää ei löytynyt, näytä virheilmoitus
+            loginError = "Sinun täytyy rekisteröityä ensin.";
+        }
+        else if (BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
+        {
+            // Käyttäjä löytyy ja salasana on oikein
             loginError = null;
 
+            // Tallenna käyttäjän sessio
             UserSession.Username = user.Username;
             UserSession.IsLoggedIn = true;
 
+            // Ohjaa käyttäjä eteenpäin
             if (!string.IsNullOrEmpty(UserSession.RedirectUrl))
             {
                 NavigationManager.NavigateTo(UserSession.RedirectUrl);
@@ -176,7 +213,8 @@
         }
         else
         {
-            loginError = "Invalid email or password";
+            // Salasana ei täsmää
+            loginError = "Virheellinen sähköposti tai salasana.";
         }
     }
 
