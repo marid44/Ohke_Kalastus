@@ -17,6 +17,7 @@ namespace KalastusWebsite.Models
         public double Longitude { get; set; }
 
         // Foreign key linking the marker to the user who created it
+        [Required]
         [ForeignKey("User")]
         public int UserId { get; set; }
 
@@ -24,6 +25,6 @@ namespace KalastusWebsite.Models
         public string? MarkerName { get; set; }
 
         // Navigation property to the User entity
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }

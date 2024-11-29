@@ -182,25 +182,26 @@
 
     private async Task HandleLogin()
     {
-        // Tarkista, onko käyttäjä olemassa tietokannassa
+        // Check if the user exists in the database
         var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
         if (user == null)
         {
-            // Käyttäjää ei löytynyt, näytä virheilmoitus
+            // User not found, show an error message
             loginError = "Sinun täytyy rekisteröityä ensin.";
         }
         else if (BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
         {
-            // Käyttäjä löytyy ja salasana on oikein
+            // User found, and password matches
             loginError = null;
 
-            // Tallenna käyttäjän sessio
+            // Save the user session
+            UserSession.UserId = user.Id; // Set the UserId here
             UserSession.Username = user.Username;
             UserSession.IsLoggedIn = true;
 
-            // Ohjaa käyttäjä eteenpäin
+            // Redirect the user
             if (!string.IsNullOrEmpty(UserSession.RedirectUrl))
             {
                 NavigationManager.NavigateTo(UserSession.RedirectUrl);
@@ -213,10 +214,19 @@
         }
         else
         {
-            // Salasana ei täsmää
+            // Password doesn't match
             loginError = "Virheellinen sähköposti tai salasana.";
         }
     }
+
+    private void Logout()
+    {
+        UserSession.UserId = 0;
+        UserSession.Username = null;
+        UserSession.IsLoggedIn = false;
+        NavigationManager.NavigateTo("/login");
+    }
+
 
     public class LoginModel
     {

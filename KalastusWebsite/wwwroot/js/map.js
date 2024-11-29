@@ -13,14 +13,24 @@ const crs = new L.Proj.CRS('EPSG:3067',
     }
 );
 
-function initializeMap(apiKey) {
-    console.log("Map initialization started."); // Debug message
+async function initializeMap(apiKey, userId) {
+    console.log("Map initialization started.");
+    console.log("USER_ID received:", userId);
 
+    if (!userId) {
+        alert("Please log in to access the map.");
+        return;
+    }
+
+    // Update the marker count
+    await updateMarkerCount(userId);
+
+    // Remove any existing map instance
     if (map) {
-        map.eachLayer(layer => map.removeLayer(layer)); // Clear all layers
-        map.remove(); // Destroy the existing map instance
+        map.eachLayer(layer => map.removeLayer(layer));
+        map.remove();
         map = null;
-        console.log("Existing map removed."); // Debug message
+        console.log("Existing map removed.");
     }
 
     // Initialize the map
@@ -31,15 +41,17 @@ function initializeMap(apiKey) {
         maxZoom: 15,
         minZoom: 0
     });
-    console.log("Map instance created."); // Debug message
+    console.log("Map instance created.");
 
+    // Set bounds for Finland
     const finlandBounds = [
         [59.5, 19.0],
         [70.1, 31.0]
     ];
     map.fitBounds(finlandBounds);
-    console.log("Map bounds set."); // Debug message
+    console.log("Map bounds set.");
 
+    // Add the rivers layer
     const wmtsUrl = 'https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0';
     riversLayer = L.tileLayer(`${wmtsUrl}/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png?api-key=${apiKey}`, {
         attribution: '&copy; Maanmittauslaitos',
@@ -49,52 +61,113 @@ function initializeMap(apiKey) {
         transparent: true
     });
     riversLayer.addTo(map);
-    console.log("Rivers layer added to map."); // Debug message
+    console.log("Rivers layer added to map.");
 
-    // Test map click event
-    map.on('click', function (e) {
-        console.log("Map clicked."); // Debug message
-        const { lat, lng } = e.latlng;
-        console.log(`Clicked coordinates: Latitude = ${lat}, Longitude = ${lng}`); // Debug coordinates
-
-        // Place a marker
-        const marker = L.marker([lat, lng]).addTo(map);
-        console.log("Marker placed on map."); // Debug marker placement
+    // Fetch and display markers
+    const markers = await fetchMarkers(userId);
+    markers.forEach(marker => {
+        L.marker([marker.latitude, marker.longitude])
+            .addTo(map)
+            .bindPopup(`Marker ID: ${marker.id}`);
     });
+
+    // Add a click event listener to the map
+    if (map) {
+        console.log("Adding map click event listener.");
+        map.on("click", async function (e) {
+            const { lat, lng } = e.latlng;
+            console.log(`Clicked at Latitude: ${lat}, Longitude: ${lng}`);
+            await saveMarker(lat, lng, userId);
+            await updateMarkerCount(userId);
+        });
+    } else {
+        console.error("Map is not ready for event listeners.");
+    }
 }
 
-
-
-async function fetchMarkers() {
-    const userId = USER_ID; // Replace with the logged-in user's ID passed from Blazor
-    if (!userId) return [];
+// Fetch markers from the backend for a specific user
+async function fetchMarkers(userId) {
+    if (!userId) {
+        console.error("User ID is missing. Cannot fetch markers.");
+        return [];
+    }
 
     const response = await fetch(`/api/Marker?userId=${userId}`);
     if (response.ok) {
-        return await response.json();
+        const markers = await response.json();
+        console.log("Fetched markers:", markers);
+        return markers;
     } else {
         console.error("Failed to fetch markers:", response.statusText);
         return [];
     }
 }
 
-
-function toggleLayer(layerName, isVisible) {
-    const layer = layerName === "rivers" ? riversLayer :
-        layerName === "roads" ? roadsLayer : null;
-
-    if (!layer) {
-        console.warn(`Layer "${layerName}" not found.`);
+// Save a marker to the backend
+async function saveMarker(latitude, longitude, userId) {
+    if (!userId) {
+        alert("Please log in to place a marker.");
         return;
     }
 
-    if (isVisible) {
-        layer.addTo(map);
+    // Check if the user has reached the 10-marker limit
+    const markerCount = await fetch(`/api/Marker?userId=${userId}`)
+        .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+        .then(data => data.length)
+        .catch(() => 0);
+
+    if (markerCount >= 10) {
+        alert("You can only place up to 10 markers.");
+        console.warn("Marker limit reached for user:", userId);
+        return;
+    }
+
+    const markerData = { latitude, longitude, userId };
+    console.log("Sending marker data:", markerData);
+
+    const response = await fetch("/api/Marker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(markerData)
+    });
+
+    if (response.ok) {
+        console.log("Marker saved successfully.");
+
+        // Immediately add the new marker to the map
+        L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup(`Marker added at Latitude: ${latitude}, Longitude: ${longitude}`)
+            .openPopup();
+
+        // Optionally update the marker count
+        await updateMarkerCount(userId);
     } else {
-        map.removeLayer(layer);
+        const errorMessage = await response.text();
+        console.error("Failed to save marker:", response.statusText, errorMessage);
     }
 }
 
+
+// Update the marker count displayed on the map
+async function updateMarkerCount(userId) {
+    try {
+        const markerCount = await fetch(`/api/Marker?userId=${userId}`)
+            .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+            .then(data => data.length)
+            .catch(error => {
+                console.error("Failed to fetch marker count:", error);
+                return 0;
+            });
+
+        document.getElementById("markerCount").innerText = markerCount;
+        console.log("Updated marker count:", markerCount);
+    } catch (error) {
+        console.error("Error updating marker count:", error);
+    }
+}
+
+// Search for a location and center the map there
 function searchLocation(query, apiKey) {
     if (!query || !apiKey) {
         console.warn("Invalid search query or missing API key.");
@@ -124,26 +197,19 @@ function searchLocation(query, apiKey) {
         .catch(error => console.error("Geocoding error:", error));
 }
 
-async function saveMarker(latitude, longitude) {
-    const userId = USER_ID; // Replace with the logged-in user's ID passed from Blazor
-    if (!userId) {
-        alert("You must be logged in to place a marker.");
+// Toggle map layers (e.g., rivers, roads)
+function toggleLayer(layerName, isVisible) {
+    const layer = layerName === "rivers" ? riversLayer :
+        layerName === "roads" ? roadsLayer : null;
+
+    if (!layer) {
+        console.warn(`Layer "${layerName}" not found.`);
         return;
     }
 
-    const markerData = { latitude, longitude, userId };
-    const response = await fetch("/api/Marker", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(markerData)
-    });
-
-    if (response.ok) {
-        console.log("Marker saved successfully.");
+    if (isVisible) {
+        layer.addTo(map);
     } else {
-        console.error("Failed to save marker:", response.statusText);
+        map.removeLayer(layer);
     }
 }
-

@@ -30,14 +30,37 @@ namespace KalastusWebsite.Controllers
         [HttpPost]
         public async Task<IActionResult> AddMarker([FromBody] Marker marker)
         {
-            if (ModelState.IsValid)
+            Console.WriteLine($"Received Marker Data: Latitude = {marker.Latitude}, Longitude = {marker.Longitude}, UserId = {marker.UserId}, MarkerName = {marker.MarkerName}");
+
+            if (!ModelState.IsValid || marker.UserId <= 0)
+            {
+                Console.WriteLine("Invalid marker data.");
+                return BadRequest("Invalid marker data.");
+            }
+
+            // Check if the user already has 10 markers
+            var markerCount = await _context.Markers.CountAsync(m => m.UserId == marker.UserId);
+            if (markerCount >= 10)
+            {
+                Console.WriteLine("Marker limit reached.");
+                return BadRequest("You can only place up to 10 markers.");
+            }
+
+            try
             {
                 _context.Markers.Add(marker);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetMarkers), new { marker.Id }, marker);
+                Console.WriteLine("Marker saved successfully.");
+                return CreatedAtAction(nameof(GetMarkers), new { id = marker.Id }, marker);
             }
-            return BadRequest(ModelState);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving marker: {ex.Message}");
+                return StatusCode(500, "Internal server error.");
+            }
         }
+
+
 
         // Delete a marker
         [HttpDelete("{id}")]

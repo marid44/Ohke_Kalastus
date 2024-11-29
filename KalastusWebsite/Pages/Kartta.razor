@@ -15,6 +15,10 @@
 </div>
 
 <div id="map" style="height: 80vh; width: 100%;"></div>
+<div>
+    <p>You have placed <span id="markerCount">0</span> out of 10 markers.</p>
+</div>
+
 
 @code {
     private List<Marker> markers = new();
@@ -56,12 +60,10 @@
         if (firstRender)
         {
             apiKey = Configuration["Maanmittauslaitos:ApiKey"];
-            await JSRuntime.InvokeVoidAsync("initializeMap", apiKey);
-
-            // Pass the user ID to JavaScript
-            await JSRuntime.InvokeVoidAsync("eval", $"const USER_ID = {UserSession.UserId};");
+            await JSRuntime.InvokeVoidAsync("initializeMap", apiKey, UserSession.UserId);
         }
     }
+
 
     private async Task PerformSearch()
     {
