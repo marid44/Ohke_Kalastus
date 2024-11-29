@@ -17,34 +17,35 @@ namespace KalastusWebsite.Data
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Vote> Votes { get; set; }
-
-        // New Fish entity DbSet
         public DbSet<Fish> Fishes { get; set; }
+        public DbSet<Marker> Markers { get; set; } // Add Marker DbSet
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Suhde: Conversation <-> Comments
+            // Relationships and constraints
+
+            // Relationship: Conversation <-> Comments
             modelBuilder.Entity<Conversation>()
                 .HasMany(c => c.Comments)
                 .WithOne(c => c.Conversation)
                 .HasForeignKey(c => c.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Suhde: Media <-> Votes
+            // Relationship: Media <-> Votes
             modelBuilder.Entity<Vote>()
                 .HasOne(v => v.Media)
                 .WithMany(m => m.Votes)
                 .HasForeignKey(v => v.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Yksilöllinen rajoite: Varmistaa, että yksi käyttäjä voi äänestää vain kerran per media
+            // Ensure unique votes per media by a single user
             modelBuilder.Entity<Vote>()
                 .HasIndex(v => new { v.MediaId, v.UserId })
                 .IsUnique();
 
-            // Suhde: MediaComment <-> Media
+            // Relationship: MediaComment <-> Media
             modelBuilder.Entity<MediaComment>()
                 .HasOne(mc => mc.Media)
                 .WithMany(m => m.Comments)
@@ -88,7 +89,12 @@ namespace KalastusWebsite.Data
                 }
             );
 
-
+            // Relationship: Marker <-> User
+            modelBuilder.Entity<Marker>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

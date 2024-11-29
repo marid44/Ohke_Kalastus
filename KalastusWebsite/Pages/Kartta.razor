@@ -1,6 +1,10 @@
 @page "/kartta"
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration
+@inject HttpClient Http
+@inject UserSession UserSession
+@using KalastusWebsite.Models
+@using KalastusWebsite.Services
 
 <h3>Kalastus kartta</h3>
 
@@ -13,36 +17,68 @@
 <div id="map" style="height: 80vh; width: 100%;"></div>
 
 @code {
+    private List<Marker> markers = new();
     private string apiKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserSession.IsLoggedIn)
+        {
+            try
+            {
+                markers = await Http.GetFromJsonAsync<List<Marker>>($"api/Marker?userId={UserSession.UserId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching markers: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task AddMarker(double latitude, double longitude)
+    {
+        var newMarker = new Marker
+            {
+                Latitude = latitude,
+                Longitude = longitude,
+                UserId = UserSession.UserId
+            };
+
+        var response = await Http.PostAsJsonAsync("api/Marker", newMarker);
+        if (response.IsSuccessStatusCode)
+        {
+            markers.Add(newMarker);
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            apiKey = Configuration["Maanmittauslaitos:ApiKey"]; // Ensure API key is set in appsettings.json
+            apiKey = Configuration["Maanmittauslaitos:ApiKey"];
             await JSRuntime.InvokeVoidAsync("initializeMap", apiKey);
 
-            // Automatically toggle the "Rivers" layer on
-            await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", true);
+            // Pass the user ID to JavaScript
+            await JSRuntime.InvokeVoidAsync("eval", $"const USER_ID = {UserSession.UserId};");
         }
     }
 
     private async Task PerformSearch()
     {
-        // Get the value of the search input
         var searchQuery = await JSRuntime.InvokeAsync<string>("eval", "document.getElementById('searchInput').value");
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            // Call the JavaScript function to search the location
             await JSRuntime.InvokeVoidAsync("searchLocation", searchQuery, apiKey);
         }
     }
 
     private async Task ToggleRivers(ChangeEventArgs e)
     {
-        bool isChecked = (bool)e.Value;
-        await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", isChecked);
+        if (e.Value is bool isChecked)
+        {
+            await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", isChecked);
+        }
     }
 }
 

@@ -14,12 +14,16 @@ const crs = new L.Proj.CRS('EPSG:3067',
 );
 
 function initializeMap(apiKey) {
+    console.log("Map initialization started."); // Debug message
+
     if (map) {
+        map.eachLayer(layer => map.removeLayer(layer)); // Clear all layers
         map.remove(); // Destroy the existing map instance
         map = null;
+        console.log("Existing map removed."); // Debug message
     }
 
-    // Initialize the map without a specific view, we'll use fitBounds
+    // Initialize the map
     map = L.map('map', {
         crs: crs,
         continuousWorld: true,
@@ -27,15 +31,15 @@ function initializeMap(apiKey) {
         maxZoom: 15,
         minZoom: 0
     });
+    console.log("Map instance created."); // Debug message
 
-    // Set the bounds to fit Finland
     const finlandBounds = [
-        [59.5, 19.0], // Southwest corner (Helsinki region)
-        [70.1, 31.0]  // Northeast corner (Lapland)
+        [59.5, 19.0],
+        [70.1, 31.0]
     ];
-    map.fitBounds(finlandBounds); // Adjust map to show all of Finland
+    map.fitBounds(finlandBounds);
+    console.log("Map bounds set."); // Debug message
 
-    // Rivers layer using WMTS
     const wmtsUrl = 'https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0';
     riversLayer = L.tileLayer(`${wmtsUrl}/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png?api-key=${apiKey}`, {
         attribution: '&copy; Maanmittauslaitos',
@@ -44,35 +48,58 @@ function initializeMap(apiKey) {
         tileSize: 256,
         transparent: true
     });
-
-    // Roads layer using WMTS
-    roadsLayer = L.tileLayer(`${wmtsUrl}/liikenneverkko/default/ETRS-TM35FIN/{z}/{y}/{x}.png?api-key=${apiKey}`, {
-        attribution: '&copy; Maanmittauslaitos',
-        maxZoom: 15,
-        minZoom: 0,
-        tileSize: 256,
-        transparent: true
-    });
-
-    // Automatically add the rivers layer
     riversLayer.addTo(map);
+    console.log("Rivers layer added to map."); // Debug message
+
+    // Test map click event
+    map.on('click', function (e) {
+        console.log("Map clicked."); // Debug message
+        const { lat, lng } = e.latlng;
+        console.log(`Clicked coordinates: Latitude = ${lat}, Longitude = ${lng}`); // Debug coordinates
+
+        // Place a marker
+        const marker = L.marker([lat, lng]).addTo(map);
+        console.log("Marker placed on map."); // Debug marker placement
+    });
 }
+
+
+
+async function fetchMarkers() {
+    const userId = USER_ID; // Replace with the logged-in user's ID passed from Blazor
+    if (!userId) return [];
+
+    const response = await fetch(`/api/Marker?userId=${userId}`);
+    if (response.ok) {
+        return await response.json();
+    } else {
+        console.error("Failed to fetch markers:", response.statusText);
+        return [];
+    }
+}
+
 
 function toggleLayer(layerName, isVisible) {
     const layer = layerName === "rivers" ? riversLayer :
         layerName === "roads" ? roadsLayer : null;
 
-    if (layer) {
-        if (isVisible) {
-            layer.addTo(map);
-        } else {
-            map.removeLayer(layer);
-        }
+    if (!layer) {
+        console.warn(`Layer "${layerName}" not found.`);
+        return;
+    }
+
+    if (isVisible) {
+        layer.addTo(map);
+    } else {
+        map.removeLayer(layer);
     }
 }
 
 function searchLocation(query, apiKey) {
-    if (!query || !apiKey) return;
+    if (!query || !apiKey) {
+        console.warn("Invalid search query or missing API key.");
+        return;
+    }
 
     const geocodingUrl = `https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search`;
 
@@ -85,10 +112,38 @@ function searchLocation(query, apiKey) {
             if (data.features && data.features.length > 0) {
                 const location = data.features[0];
                 const coords = location.geometry.coordinates;
-                map.setView([coords[1], coords[0]], 12);
+                map.setView([coords[1], coords[0]], 12); // Center map to the location
+                L.marker([coords[1], coords[0]])
+                    .addTo(map)
+                    .bindPopup(location.properties.label)
+                    .openPopup();
             } else {
-                console.log(`No location found for: ${query}`);
+                alert(`No location found for: ${query}`);
             }
         })
         .catch(error => console.error("Geocoding error:", error));
 }
+
+async function saveMarker(latitude, longitude) {
+    const userId = USER_ID; // Replace with the logged-in user's ID passed from Blazor
+    if (!userId) {
+        alert("You must be logged in to place a marker.");
+        return;
+    }
+
+    const markerData = { latitude, longitude, userId };
+    const response = await fetch("/api/Marker", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(markerData)
+    });
+
+    if (response.ok) {
+        console.log("Marker saved successfully.");
+    } else {
+        console.error("Failed to save marker:", response.statusText);
+    }
+}
+
