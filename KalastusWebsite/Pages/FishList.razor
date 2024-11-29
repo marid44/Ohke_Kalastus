@@ -1,13 +1,11 @@
 @page "/fishlist"
-@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
 @using KalastusWebsite.Services
 @using KalastusWebsite.Data
 @using KalastusWebsite.Models
-@inject AppDbContext _context
-@inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
-@inject IHttpClientFactory ClientFactory
-
 
 <h3>Fish List</h3>
 
@@ -38,12 +36,11 @@ else
                 </p>
                 <p>@(currentLanguage == "fi" ? fish.DescriptionFI : fish.DescriptionEN)</p>
                 <img src="@fish.ImageUrl" alt="Image of @fish.EnglishName" width="200" />
-                <p style="font-size: 0.9em; color: #95a5a6;" </p>
+                <p style="font-size: 0.9em; color: #95a5a6;"></p>
             </li>
         }
     </ul>
 }
-
 
 @code {
     private string currentLanguage = "fi"; // Default to Finnish
