@@ -1,0 +1,75 @@
+@page "/fishlist"
+@inject HttpClient Http
+@using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+@inject IHttpClientFactory ClientFactory
+
+
+<h3>Fish List</h3>
+
+@if (fishes == null && string.IsNullOrEmpty(errorMessage))
+{
+    <div class="spinner">
+        <img src="spinner.gif" alt="Loading..." />
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color: red;">@errorMessage</p>
+}
+else if (fishes.Count == 0)
+{
+    <p>No fish found.</p>
+}
+else
+{
+    <ul>
+        @foreach (var fish in fishes)
+        {
+            <li>
+                <h4>@(currentLanguage == "fi" ? fish.FinnishName : fish.EnglishName)</h4>
+                <p>
+                    <strong>@(currentLanguage == "fi" ? "Elinympäristö" : "Habitat"):</strong>
+                    @(currentLanguage == "fi" ? fish.HabitatFI : fish.Habitat)
+                </p>
+                <p>@(currentLanguage == "fi" ? fish.DescriptionFI : fish.DescriptionEN)</p>
+                <img src="@fish.ImageUrl" alt="Image of @fish.EnglishName" width="200" />
+                <p>Image URL: @fish.ImageUrl</p> <!-- Debug the ImageUrl -->
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private string currentLanguage = "fi"; // Default to Finnish
+    private List<Fish> fishes = null; // Fish list
+    private string errorMessage = null; // Error message for failed API call
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("API"); // Use the "API" client
+            fishes = await client.GetFromJsonAsync<List<Fish>>("api/Fish");
+        }
+        catch (HttpRequestException httpEx)
+        {
+            errorMessage = "Unable to reach the server. Please try again later.";
+            Console.WriteLine($"HTTP Request Error: {httpEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred. Please try again later.";
+            Console.WriteLine($"General Error: {ex.Message}");
+        }
+    }
+
+    void SetLanguage(string language)
+    {
+        currentLanguage = language;
+    }
+}

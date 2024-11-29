@@ -18,6 +18,9 @@ namespace KalastusWebsite.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Vote> Votes { get; set; }
 
+        // New Fish entity DbSet
+        public DbSet<Fish> Fishes { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -47,6 +50,45 @@ namespace KalastusWebsite.Data
                 .WithMany(m => m.Comments)
                 .HasForeignKey(mc => mc.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Seed Fish data
+            modelBuilder.Entity<Fish>().HasData(
+                new Fish
+                {
+                    Id = 1,
+                    FinnishName = "Ahven",
+                    EnglishName = "Perch",
+                    Habitat = "Freshwater",
+                    HabitatFI = "Makea vesi",
+                    DescriptionFI = "Ahven elää järvissä, joissa on puhdasta vettä.",
+                    DescriptionEN = "Perch lives in clean freshwater lakes.",
+                    ImageUrl = "wwwroot/images/ahven.jpg"
+
+                },
+                new Fish
+                {
+                    Id = 2,
+                    FinnishName = "Hauki",
+                    EnglishName = "Pike",
+                    Habitat = "Freshwater",
+                    HabitatFI = "Makea vesi",
+                    DescriptionFI = "Hauki on tunnettu petokala Suomessa.",
+                    DescriptionEN = "Pike is a well-known predatory fish in Finland.",
+                    ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg"
+                },
+                new Fish
+                {
+                    Id = 3,
+                    FinnishName = "Siika",
+                    EnglishName = "Whitefish",
+                    Habitat = "Brackish/Sea",
+                    HabitatFI = "Murtovesi / Meri",
+                    DescriptionFI = "Siika elää Itämeressä ja joissakin järvissä.",
+                    DescriptionEN = "Whitefish lives in the Baltic Sea and some lakes.",
+                    ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg"
+                }
+            );
+
         }
     }
 }
