@@ -142,7 +142,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Ahven",
                             Habitat = "Freshwater",
                             HabitatFI = "Makea vesi",
-                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/37/Perca_fluviatilis_2012_G1.jpg"
+                            ImageUrl = "/images/ahven.jpg"
                         },
                         new
                         {
@@ -153,7 +153,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Hauki",
                             Habitat = "Freshwater",
                             HabitatFI = "Makea vesi",
-                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg"
+                            ImageUrl = "/images/hauki.jpg"
                         },
                         new
                         {
@@ -164,7 +164,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Siika",
                             Habitat = "Brackish/Sea",
                             HabitatFI = "Murtovesi / Meri",
-                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg"
+                            ImageUrl = "/images/siika.jpg"
                         });
                 });
 

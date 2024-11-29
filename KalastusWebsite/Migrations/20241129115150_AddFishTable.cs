@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -37,34 +36,17 @@ namespace KalastusWebsite.Migrations
                 columns: new[] { "Id", "DescriptionEN", "DescriptionFI", "EnglishName", "FinnishName", "Habitat", "HabitatFI", "ImageUrl" },
                 values: new object[,]
                 {
-            { 1, "Perch lives in clean freshwater lakes.", "Ahven elää järvissä, joissa on puhdasta vettä.", "Perch", "Ahven", "Freshwater", "Makea vesi", "https://upload.wikimedia.org/wikipedia/commons/3/37/Perca_fluviatilis_2012_G1.jpg" },
-            { 2, "Pike is a well-known predatory fish in Finland.", "Hauki on tunnettu petokala Suomessa.", "Pike", "Hauki", "Freshwater", "Makea vesi", "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg" },
-            { 3, "Whitefish lives in the Baltic Sea and some lakes.", "Siika elää Itämeressä ja joissakin järvissä.", "Whitefish", "Siika", "Brackish/Sea", "Murtovesi / Meri", "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg" }
+                    { 1, "Perch lives in clean freshwater lakes.", "Ahven elää järvissä, joissa on puhdasta vettä.", "Perch", "Ahven", "Freshwater", "Makea vesi", "wwwroot/images/ahven.jpg" },
+                    { 2, "Pike is a well-known predatory fish in Finland.", "Hauki on tunnettu petokala Suomessa.", "Pike", "Hauki", "Freshwater", "Makea vesi", "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg" },
+                    { 3, "Whitefish lives in the Baltic Sea and some lakes.", "Siika elää Itämeressä ja joissakin järvissä.", "Whitefish", "Siika", "Brackish/Sea", "Murtovesi / Meri", "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg" }
                 });
         }
-
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "Fishes");
-
-            migrationBuilder.CreateTable(
-                name: "Messages",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Content = table.Column<string>(type: "TEXT", nullable: false),
-                    Receiver = table.Column<string>(type: "TEXT", nullable: false),
-                    Sender = table.Column<string>(type: "TEXT", nullable: false),
-                    SentAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Messages", x => x.Id);
-                });
         }
     }
 }

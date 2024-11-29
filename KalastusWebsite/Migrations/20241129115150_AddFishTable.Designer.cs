@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241129093523_AddFishTable")]
+    [Migration("20241129115150_AddFishTable")]
     partial class AddFishTable
     {
         /// <inheritdoc />
@@ -145,7 +145,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Ahven",
                             Habitat = "Freshwater",
                             HabitatFI = "Makea vesi",
-                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/37/Perca_fluviatilis_2012_G1.jpg"
+                            ImageUrl = "wwwroot/images/ahven.jpg"
                         },
                         new
                         {

@@ -62,8 +62,7 @@ namespace KalastusWebsite.Data
                     HabitatFI = "Makea vesi",
                     DescriptionFI = "Ahven elää järvissä, joissa on puhdasta vettä.",
                     DescriptionEN = "Perch lives in clean freshwater lakes.",
-                    ImageUrl = "wwwroot/images/ahven.jpg"
-
+                    ImageUrl = "/images/ahven.jpg"
                 },
                 new Fish
                 {
@@ -74,7 +73,7 @@ namespace KalastusWebsite.Data
                     HabitatFI = "Makea vesi",
                     DescriptionFI = "Hauki on tunnettu petokala Suomessa.",
                     DescriptionEN = "Pike is a well-known predatory fish in Finland.",
-                    ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg"
+                    ImageUrl = "/images/hauki.jpg"
                 },
                 new Fish
                 {
@@ -85,9 +84,10 @@ namespace KalastusWebsite.Data
                     HabitatFI = "Murtovesi / Meri",
                     DescriptionFI = "Siika elää Itämeressä ja joissakin järvissä.",
                     DescriptionEN = "Whitefish lives in the Baltic Sea and some lakes.",
-                    ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg"
+                    ImageUrl = "/images/siika.jpg"
                 }
             );
+
 
         }
     }
