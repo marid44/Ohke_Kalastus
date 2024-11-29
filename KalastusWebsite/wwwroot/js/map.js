@@ -17,23 +17,14 @@ async function initializeMap(apiKey, userId) {
     console.log("Map initialization started.");
     console.log("USER_ID received:", userId);
 
-    if (!userId) {
-        alert("Please log in to access the map.");
-        return;
-    }
-
-    // Update the marker count
-    await updateMarkerCount(userId);
-
-    // Remove any existing map instance
+    // Initialize the map
     if (map) {
-        map.eachLayer(layer => map.removeLayer(layer));
-        map.remove();
+        map.eachLayer(layer => map.removeLayer(layer)); // Remove all layers
+        map.remove(); // Remove map instance
         map = null;
         console.log("Existing map removed.");
     }
 
-    // Initialize the map
     map = L.map('map', {
         crs: crs,
         continuousWorld: true,
@@ -43,7 +34,6 @@ async function initializeMap(apiKey, userId) {
     });
     console.log("Map instance created.");
 
-    // Set bounds for Finland
     const finlandBounds = [
         [59.5, 19.0],
         [70.1, 31.0]
@@ -51,7 +41,6 @@ async function initializeMap(apiKey, userId) {
     map.fitBounds(finlandBounds);
     console.log("Map bounds set.");
 
-    // Add the rivers layer
     const wmtsUrl = 'https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0';
     riversLayer = L.tileLayer(`${wmtsUrl}/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png?api-key=${apiKey}`, {
         attribution: '&copy; Maanmittauslaitos',
@@ -63,17 +52,17 @@ async function initializeMap(apiKey, userId) {
     riversLayer.addTo(map);
     console.log("Rivers layer added to map.");
 
-    // Fetch and display markers
-    const markers = await fetchMarkers(userId);
-    markers.forEach(marker => {
-        L.marker([marker.latitude, marker.longitude])
-            .addTo(map)
-            .bindPopup(`Marker ID: ${marker.id}`);
-    });
+    if (userId > 0) {
+        // Fetch and display markers for logged-in users
+        const markers = await fetchMarkers(userId);
+        markers.forEach(marker => {
+            L.marker([marker.latitude, marker.longitude])
+                .addTo(map)
+                .bindPopup(`Marker ID: ${marker.id}`);
+        });
 
-    // Add a click event listener to the map
-    if (map) {
-        console.log("Adding map click event listener.");
+        // Add click event to place markers
+        console.log("Adding map click event listener for logged-in user.");
         map.on("click", async function (e) {
             const { lat, lng } = e.latlng;
             console.log(`Clicked at Latitude: ${lat}, Longitude: ${lng}`);
@@ -81,9 +70,20 @@ async function initializeMap(apiKey, userId) {
             await updateMarkerCount(userId);
         });
     } else {
-        console.error("Map is not ready for event listeners.");
+        console.log("User is not logged in. Markers and click functionality are disabled.");
     }
 }
+
+
+function resetMarkerCount() {
+    const markerCountElement = document.getElementById("markerCount");
+    if (markerCountElement) {
+        markerCountElement.innerText = 0;
+    }
+    console.log("Marker count reset.");
+}
+
+
 
 // Fetch markers from the backend for a specific user
 async function fetchMarkers(userId) {
@@ -151,21 +151,33 @@ async function saveMarker(latitude, longitude, userId) {
 
 // Update the marker count displayed on the map
 async function updateMarkerCount(userId) {
-    try {
-        const markerCount = await fetch(`/api/Marker?userId=${userId}`)
-            .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
-            .then(data => data.length)
-            .catch(error => {
-                console.error("Failed to fetch marker count:", error);
-                return 0;
-            });
+    if (!userId) {
+        console.error("User ID is missing. Cannot update marker count.");
+        return;
+    }
 
-        document.getElementById("markerCount").innerText = markerCount;
-        console.log("Updated marker count:", markerCount);
-    } catch (error) {
-        console.error("Error updating marker count:", error);
+    const currentMarkerCount = await fetch(`/api/Marker?userId=${userId}`)
+        .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+        .then(data => data.length)
+        .catch(error => {
+            console.error("Failed to fetch marker count:", error);
+            return 0;
+        });
+
+    document.getElementById("markerCount").innerText = currentMarkerCount;
+    console.log("Updated marker count:", currentMarkerCount);
+}
+
+
+function clearMap() {
+    if (map) {
+        map.eachLayer(layer => map.removeLayer(layer)); // Remove all layers
+        map.remove(); // Destroy the map instance
+        map = null; // Reset the map variable
+        console.log("Map cleared.");
     }
 }
+
 
 // Search for a location and center the map there
 function searchLocation(query, apiKey) {

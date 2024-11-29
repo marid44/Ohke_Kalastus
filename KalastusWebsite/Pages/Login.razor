@@ -6,6 +6,7 @@
 @inject AppDbContext _context
 @inject NavigationManager NavigationManager
 @inject UserSession UserSession
+@inject IJSRuntime JSRuntime
 
 <div class="login-container">
     <div class="login-box">
@@ -219,13 +220,18 @@
         }
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        UserSession.UserId = 0;
+        UserSession.UserId = 0; // Reset user session
         UserSession.Username = null;
         UserSession.IsLoggedIn = false;
-        NavigationManager.NavigateTo("/login");
+
+        // Clear the map using JavaScript
+        await JSRuntime.InvokeVoidAsync("clearMap");
+
+        NavigationManager.NavigateTo("/login"); // Redirect to login page
     }
+
 
 
     public class LoginModel

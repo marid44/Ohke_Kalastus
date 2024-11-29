@@ -30,19 +30,16 @@ namespace KalastusWebsite.Controllers
         [HttpPost]
         public async Task<IActionResult> AddMarker([FromBody] Marker marker)
         {
-            Console.WriteLine($"Received Marker Data: Latitude = {marker.Latitude}, Longitude = {marker.Longitude}, UserId = {marker.UserId}, MarkerName = {marker.MarkerName}");
-
-            if (!ModelState.IsValid || marker.UserId <= 0)
+            if (marker.UserId <= 0)
             {
-                Console.WriteLine("Invalid marker data.");
-                return BadRequest("Invalid marker data.");
+                Console.WriteLine("Unauthorized marker placement attempt.");
+                return Unauthorized("You must be logged in to place markers.");
             }
 
-            // Check if the user already has 10 markers
             var markerCount = await _context.Markers.CountAsync(m => m.UserId == marker.UserId);
             if (markerCount >= 10)
             {
-                Console.WriteLine("Marker limit reached.");
+                Console.WriteLine("Marker limit reached for user.");
                 return BadRequest("You can only place up to 10 markers.");
             }
 
