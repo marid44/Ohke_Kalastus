@@ -7,16 +7,24 @@ using KalastusWebsite.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents();
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 1024 * 1024 * 1024; // 1 GB
+    });
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlite("Data Source=app.db"));
+    options.UseSqlite("Data Source=app.db"));
 builder.Services.AddSingleton<UserSession>();
 builder.Services.AddSingleton<EventService>();
 builder.Services.AddScoped<KalastusWebsite.Services.UserSession>();
 
+// Configure Kestrel to allow large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 1024 * 1024 * 1024; // 1 GB
+});
 
 var app = builder.Build();
 
@@ -24,14 +32,11 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseRouting();
 
 app.MapBlazorHub();

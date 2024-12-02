@@ -3,6 +3,7 @@ using System;
 using KalastusWebsite.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241118065532_RecreateTables")]
+    partial class RecreateTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -36,7 +39,7 @@ namespace KalastusWebsite.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("BioHistories");
+                    b.ToTable("BioHistory");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.Comment", b =>
@@ -196,56 +199,6 @@ namespace KalastusWebsite.Migrations
                     b.ToTable("UserProfiles");
                 });
 
-            modelBuilder.Entity("KalastusWebsite.Models.Vote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsUpVote")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MediaId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MediaId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("Votes");
-                });
-
-            modelBuilder.Entity("Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Receiver")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Sender")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Messages");
-                });
-
             modelBuilder.Entity("KalastusWebsite.Models.BioHistory", b =>
                 {
                     b.HasOne("KalastusWebsite.Models.UserProfile", null)
@@ -286,17 +239,6 @@ namespace KalastusWebsite.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KalastusWebsite.Models.Vote", b =>
-                {
-                    b.HasOne("KalastusWebsite.Models.Media", "Media")
-                        .WithMany("Votes")
-                        .HasForeignKey("MediaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Media");
-                });
-
             modelBuilder.Entity("KalastusWebsite.Models.Conversation", b =>
                 {
                     b.Navigation("Comments");
@@ -305,8 +247,6 @@ namespace KalastusWebsite.Migrations
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("Votes");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.UserProfile", b =>

@@ -1,0 +1,461 @@
+@page "/add-media"
+@using Microsoft.AspNetCore.Components.Forms
+@using KalastusWebsite.Models
+@using KalastusWebsite.Data
+@using KalastusWebsite.Services
+@inject IWebHostEnvironment Environment
+@inject AppDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject UserSession UserSession
+@using Microsoft.EntityFrameworkCore
+
+<style>
+    /* Lisää kommentti -painike */
+    .btn-primary {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        background-color: #007bff;
+        /* Sininen väri */
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        margin-top: 15px;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        /* Tummempi sininen hover-efekti */
+        transform: scale(1.05);
+    }
+
+    /* Poista-painike */
+    .btn-delete {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: rgb(255, 255, 255);
+        background-color: #000000;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-delete:hover {
+        background-color: #b43434;
+        /* Tummempi punainen hover-efekti */
+        transform: scale(1.05);
+        /* Kevyt zoomaus */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-delete:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 53, 0.4);
+        /* Korostus focus-tilassa */
+    }
+
+    /* Lomakecontainer */
+    .upload-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f3f4f6, #e8eaf6);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    /* Lomakeotsikko */
+    .upload-container h2 {
+        font-weight: 700;
+        font-size: 20px;
+        color: rgb(46, 109, 227);
+        margin-bottom: 20px;
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+
+    /* Piilotettu tiedostokenttä */
+    .form-group input[type="file"] {
+        display: none;
+    }
+
+    /* Mukautettu tiedostovalintapainike */
+    .custom-file-label {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        background-color: #007bff;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .custom-file-label:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+
+    /* Lataa-painike */
+    .btn-primary {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        margin-top: 15px;
+    }
+
+    .btn-primary:hover {
+        background-color: #004895;
+        transform: scale(1.05);
+    }
+
+    /* Ladatut mediat otsikko */
+    .upload-container h3 {
+        font-weight: 500;
+        font-size: 20px;
+        color: #333;
+        margin-top: 30px;
+    }
+
+    /* Media-galleria */
+    .media-gallery {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* 4 elementtiä per rivi */
+        gap: 15px;
+        /* Väli elementtien välillä */
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    .media-item {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .media-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .media-item video,
+    .media-item img {
+        max-width: 100%;
+        max-height: 150px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+
+    /* Kommentit */
+    ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 10px 0;
+    }
+
+    ul li {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    ul li strong {
+        font-weight: bold;
+        color: #333;
+    }
+
+    ul li small {
+        font-size: 12px;
+        color: #888;
+        margin-left: 10px;
+    }
+
+    /* Linkit */
+    a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+
+@if (UserSession?.IsLoggedIn ?? false)
+{
+    <div class="upload-container">
+        <h2>Lataa mediaa</h2>
+
+        @if (mediaFiles.Count >= 20)
+        {
+            <p>Olet saavuttanut ladattujen tiedostojen maksimimäärän (20).</p>
+        }
+        else
+        {
+            <EditForm Model="newUpload" OnValidSubmit="OnUploadButtonClicked">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">@ErrorMessage</div>
+                }
+
+                <div class="form-group">
+                    <label for="file">Valitse tiedosto:</label>
+                    <InputFile OnChange="HandleFileSelected" accept="image/*,video/mp4" />
+                </div>
+                <div class="form-group">
+                    <label class="custom-file-label" for="fileInput">Valitse tiedosto</label>
+                    <InputFile id="fileInput" OnChange="HandleFileSelected" accept="image/*,video/mp4" />
+                </div>
+
+
+                <button type="submit" class="btn btn-primary" disabled="@(!CanUpload)">Lataa</button>
+            </EditForm>
+        }
+
+        <h3>Ladatut mediat</h3>
+        <div class="media-gallery">
+            @if (mediaFiles.Any())
+            {
+                @foreach (var media in mediaFiles)
+                {
+                    <div class="media-item">
+                        @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <video controls>
+                                <source src="@media.FilePath" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        }
+                        else
+                        {
+                            <img src="@media.FilePath" alt="Ladattu media" />
+                        }
+
+                        <p>
+                            Lähettänyt:
+                            <a @onclick="() => NavigateToProfile(media.UploadedBy)">
+                                @media.UploadedBy
+                            </a>
+                        </p>
+
+                        @if (media.UploadedBy == UserSession.Username)
+                        {
+                            <button class="btn-delete" @onclick="() => DeleteMedia(media)">Poista</button>
+                        }
+
+                        <h4>Kommentit:</h4>
+                        @if (media.Comments != null && media.Comments.Any())
+                        {
+                            <ul>
+                                @foreach (var comment in media.Comments)
+                                {
+                                    <li>
+                                        <strong>@comment.Username</strong>:
+                                        <span>@comment.Text</span>
+                                        <small>(@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm"))</small>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>Ei kommentteja.</p>
+                        }
+
+                        <textarea placeholder="Kirjoita kommentti..." @bind="newComment[media.Id]" class="form-control"></textarea>
+                        <button class="btn btn-primary" @onclick="() => AddComment(media)">Lisää kommentti</button>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei ladattuja tiedostoja.</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    UserSession.RedirectUrl = "/add-media";
+    <!-- Tallenna tämän sivun osoite uudelleenohjausta varten -->
+    NavigationManager.NavigateTo("/login");
+    <!-- Ohjaa kirjautumissivulle -->
+}
+
+@code {
+    private MediaUploadModel newUpload = new MediaUploadModel();
+    private IBrowserFile? selectedFile;
+    private List<Media> mediaFiles = new();
+    private const long MaxFileSize = 1024L * 1024 * 1024; // 1 GB tiedostokoko
+    private Dictionary<int, string> newComment = new();
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            mediaFiles = await DbContext.MediaFiles
+            .Include(m => m.Comments)
+            .ToListAsync();
+
+            foreach (var media in mediaFiles)
+            {
+                newComment[media.Id] = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Virhe tietojen lataamisessa: {ex.Message}";
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+
+        if (selectedFile != null && selectedFile.Size > MaxFileSize)
+        {
+            ErrorMessage = "Tiedosto on liian suuri. Maksimikoko on 1 GB.";
+            selectedFile = null;
+        }
+        else
+        {
+            ErrorMessage = null;
+        }
+    }
+
+    private async Task OnUploadButtonClicked()
+    {
+        if (selectedFile != null && mediaFiles.Count < 20)
+        {
+            var uploadFolder = Path.Combine(Environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            var filePath = Path.Combine(uploadFolder, selectedFile.Name);
+
+            try
+            {
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(stream);
+
+                var media = new Media
+                    {
+                        FileName = selectedFile.Name,
+                        FilePath = $"/uploads/{selectedFile.Name}",
+                        UploadedBy = UserSession.Username,
+                        Comments = new List<MediaComment>()
+                    };
+
+                DbContext.MediaFiles.Add(media);
+                await DbContext.SaveChangesAsync();
+
+                mediaFiles.Add(media);
+                newComment[media.Id] = string.Empty;
+
+                selectedFile = null;
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Tiedoston tallennus epäonnistui: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task AddComment(Media media)
+    {
+        if (!string.IsNullOrWhiteSpace(newComment[media.Id]))
+        {
+            var commentText = newComment[media.Id];
+            newComment[media.Id] = string.Empty;
+
+            var comment = new MediaComment
+                {
+                    MediaId = media.Id,
+                    Text = commentText.Trim(),
+                    Username = UserSession.Username,
+                    CreatedAt = DateTime.Now
+                };
+
+            try
+            {
+                DbContext.MediaComments.Add(comment);
+                await DbContext.SaveChangesAsync();
+
+                media.Comments = await DbContext.MediaComments
+                .Where(c => c.MediaId == media.Id)
+                .ToListAsync();
+
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Kommentin lisääminen epäonnistui: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task DeleteMedia(Media media)
+    {
+        try
+        {
+            if (media.UploadedBy == UserSession.Username)
+            {
+                var filePath = Path.Combine(Environment.WebRootPath, "uploads", media.FileName);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+
+                DbContext.MediaFiles.Remove(media);
+                await DbContext.SaveChangesAsync();
+
+                mediaFiles.Remove(media);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Tiedoston poistaminen epäonnistui: {ex.Message}";
+        }
+    }
+
+    private void NavigateToProfile(string username)
+    {
+        NavigationManager.NavigateTo($"/profile/{username}");
+    }
+
+    private bool CanUpload => selectedFile != null && mediaFiles.Count < 20;
+
+    public class MediaUploadModel
+    {
+        public IBrowserFile? File { get; set; }
+    }
+}
