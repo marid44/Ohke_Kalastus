@@ -2,6 +2,7 @@
 @inject KalastusWebsite.Services.EventService EventService
 @inject KalastusWebsite.Services.UserSession UserSession
 
+
 <h1>Tapahtumat</h1>
 
 <div>
@@ -10,8 +11,10 @@
         <h3>Luo uusi tapahtuma</h3>
         <input @bind="NewEventTitle" placeholder="Otsikko" />
         <input type="date" @bind="NewEventDate" />
+        <input @bind="NewEventAddress" placeholder="Osoite" />
         <p></p>
         <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
+        
         <p></p>
         <button @onclick="AddEvent">Lisää</button>
     }
@@ -32,13 +35,14 @@
             {
                 <li>
                     <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
-                    @ev.Description<br />
+                    <strong>Osoite:</strong><a href="https://www.google.com/maps/search/?api=1&query=@ev.Address" target="_blank">@ev.Address</a>
+                    <p></p>
+                    @ev.Description<br/>
                     <em>Luonut: @ev.CreatedBy</em>
                     @if (UserSession.Username == ev.CreatedBy || UserSession.Role == "Admin")
                     {
                         <button @onclick="() => RemoveEvent(ev.Id, UserSession.Username, UserSession.Role)">Poista</button>  <!-- Poista-nappi näkyy vain Adminille -->
                     }
-
                 </li>
             }
         </ul>
@@ -53,6 +57,7 @@
     private string NewEventTitle = string.Empty;
     private DateTime NewEventDate = DateTime.Now;
     private string NewEventDescription = string.Empty;
+    private string NewEventAddress = string.Empty;
 
     // Väliaikainen lista tapahtumista
     private List<KalastusWebsite.Models.Event> events = new();
@@ -77,6 +82,7 @@
             Title = NewEventTitle,
             Date = NewEventDate,
             Description = NewEventDescription,
+            Address = NewEventAddress,
             CreatedBy = UserSession.Username // Tallentaa käyttäjää
         };
 
@@ -89,6 +95,7 @@
         NewEventTitle = string.Empty;
         NewEventDate = DateTime.Now;
         NewEventDescription = string.Empty;
+        NewEventAddress = string.Empty;
     }
 
     private void RemoveEvent(int id, string username, string role)
@@ -100,4 +107,5 @@
         // Päivitä tapahtumien lista poiston jälkeen
         events = EventService.GetEvents().ToList();
     }
+
 }
