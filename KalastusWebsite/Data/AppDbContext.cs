@@ -22,6 +22,7 @@ namespace KalastusWebsite.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite("Data Source=app.db");
+        }
 
         public DbSet<Vote> Votes { get; set; }
 
