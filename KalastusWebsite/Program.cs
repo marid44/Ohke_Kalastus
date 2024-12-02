@@ -17,7 +17,9 @@ builder.Services.AddServerSideBlazor()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=app.db"));
 
-builder.Services.AddSingleton<UserSession>();
+// Use Scoped for user-specific services
+builder.Services.AddScoped<UserSession>();
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddHttpClient("API", client =>
@@ -27,6 +29,8 @@ builder.Services.AddHttpClient("API", client =>
 
 // Add controllers for APIs
 builder.Services.AddControllers().AddNewtonsoftJson();
+
+builder.Services.AddSingleton<EventService>();
 
 // Configure Kestrel to allow large file uploads
 builder.WebHost.ConfigureKestrel(options =>

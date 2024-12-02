@@ -1,0 +1,119 @@
+/* Events.razor.css */
+
+/* Yleiset tyylit, kuten marginaalit ja fontit */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+/* Otsikko */
+h1 {
+    font-family: Times New Roman;
+    text-align: center;
+    color: black;
+}
+
+h3 {
+    font-family: Times New Roman;
+    color: black;
+}
+
+/* Päivämääräkenttä */
+.input-date {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+}
+
+/* Otsikkokenttä */
+.input-title {
+    font-family: Times New Roman;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+/* Kuvauskenttä (textarea) */
+.textarea-description {
+    width: 200%;
+    height: 100px;
+    /* Korkeus suuremmaksi */
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    resize: vertical;
+    /* Käyttäjä voi säätää korkeutta */
+}
+
+/* Tapahtuman lisäys-nappi */
+button.add-event {
+    font-family: Times New Roman;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button.add-event:hover {
+    background-color: #45a049;
+}
+
+/* Tapahtumien listaaminen */
+ul.event-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul.event-list li {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+ul.event-list li strong {
+    display: block;
+    font-size: 18px;
+    color: #333;
+}
+
+ul.event-list li em {
+    display: block;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Poista-nappi */
+button.remove-event {
+    font-family: Times New Roman;
+    background-color: #f44336;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button.remove-event:hover {
+    background-color: #e53935;
+}
+
+/* Viesti kirjautumattomille käyttäjille */
+.no-login-message {
+    color: red;
+    font-weight: bold;
+    margin-top: 20px;
+}

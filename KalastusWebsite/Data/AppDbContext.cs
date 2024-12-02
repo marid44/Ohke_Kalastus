@@ -16,6 +16,14 @@ namespace KalastusWebsite.Data
         public DbSet<MediaComment> MediaComments { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Comment> Comments { get; set; }
+
+        public DbSet<Event> Events { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlite("Data Source=app.db");
+        }
+
         public DbSet<Vote> Votes { get; set; }
         public DbSet<Fish> Fishes { get; set; }
         public DbSet<Marker> Markers { get; set; } // Add Marker DbSet
@@ -95,6 +103,7 @@ namespace KalastusWebsite.Data
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }
