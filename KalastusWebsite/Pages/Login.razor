@@ -7,24 +7,174 @@
 @inject NavigationManager NavigationManager
 @inject UserSession UserSession
 
-<h3>Kirjaudu</h3>
+<div class="login-container">
+    <div class="login-box">
+        <h3>Kirjaudu</h3>
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            @if (!string.IsNullOrEmpty(loginError))
+            {
+                <div class="alert alert-danger">
+                    @loginError
+                </div>
+            }
+            <div class="form-group">
+                <label for="email">Sähköposti</label>
+                <InputText id="email" class="form-control" @bind-Value="loginModel.Email"
+                    placeholder="Kirjoita sähköpostiosoitteesi" />
+            </div>
+            <div class="form-group">
+                <label for="password">Salasana</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password"
+                    placeholder="Kirjoita salasanasi" />
+            </div>
+            <button class="btn btn-primary btn-submit" type="submit">KIRJAUDU</button>
+        </EditForm>
 
-<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-    <div class="form-group">
-        <label for="email">Email</label>
-        <InputText id="email" class="form-control" @bind-Value="loginModel.Email" />
     </div>
-    <div class="form-group">
-        <label for="password">Password</label>
-        <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
-    </div>
-    <button class="btn btn-primary" type="submit">Login</button>
-</EditForm>
+</div>
 
-@if (loginError != null)
-{
-    <div class="alert alert-danger">@loginError</div>
-}
+<style>
+    /* Keskittää kirjautumisboksin */
+    .login-container {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        /* Vaalean harmaa tausta */
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Kirjautumisboksi taustakuvalla */
+    .login-box {
+        background: url('/kalastus%20banner.jpg') no-repeat center center;
+        background-size: cover;
+        border-radius: 25px;
+        padding: 50px;
+        width: 100%;
+        max-width: 400px;
+        /* Maksimileveys */
+        max-height: 600px;
+        /* Maksimikorkeus */
+        box-shadow: 0 15px 35px rgb(15, 15, 15);
+        /* Musta varjo ympärillä */
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        /* Piilottaa ylimenevät osat */
+    }
+
+    /* Musta kerros tekstin ja kuvan kontrastille */
+    .login-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        /* Tumma kerros kuvan päälle */
+        border-radius: 25px;
+        z-index: 1;
+    }
+
+    .login-box h3,
+    .login-box .form-group,
+    .login-box button,
+    .alert-danger {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Virheilmoitus laatikon sisälle */
+    .alert-danger {
+        width: calc(100% - 30px);
+        /* Täyttää boksin lähes koko leveyden */
+        margin: 0 auto 20px;
+        /* Keskitetään ja jätetään tilaa alaosaan */
+        padding: 15px;
+        border: 2px solid rgb(255, 0, 0);
+        /* Kirkas punainen reunus */
+        border-radius: 25px;
+        background: rgba(0, 0, 0, 0.7);
+        /* Tumma tausta */
+        color: #ffffff;
+        /* Valkoinen teksti */
+        font-size: 16px;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        /* Punainen varjo */
+        font-style: italic;
+    }
+
+    /* Lomakekentät */
+    .form-group {
+        margin-bottom: 25px;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #ddd;
+        text-transform: uppercase;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.2);
+        /* Läpinäkyvä kenttä */
+        color: white;
+        font-size: 16px;
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: #aaa;
+        font-style: italic;
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.3);
+        /* Hieman kirkkaampi kun valittu */
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        /* Sininen varjo */
+    }
+
+    /* Lähetä-painike */
+    .btn-submit {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 25px;
+        background: #007BFF;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        margin-top: 30px;
+    }
+
+    .btn-submit:hover {
+        background: #0056b3;
+        transform: translateY(-3px);
+        /* Nousee hieman hoverilla */
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+        /* Palaa alkuperäiseen kun klikattu */
+    }
+</style>
 
 @code {
     private LoginModel loginModel = new LoginModel();
@@ -32,32 +182,39 @@
 
     private async Task HandleLogin()
     {
+        // Tarkista, onko käyttäjä olemassa tietokannassa
         var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
-        if (user != null && BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
+        if (user == null)
         {
+            // Käyttäjää ei löytynyt, näytä virheilmoitus
+            loginError = "Sinun täytyy rekisteröityä ensin.";
+        }
+        else if (BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
+        {
+            // Käyttäjä löytyy ja salasana on oikein
             loginError = null;
 
+            // Tallenna käyttäjän sessio
             UserSession.Username = user.Username;
             UserSession.IsLoggedIn = true;
 
-            // Check if there's a redirect URL set in UserSession
+            // Ohjaa käyttäjä eteenpäin
             if (!string.IsNullOrEmpty(UserSession.RedirectUrl))
             {
-                // Redirect to the stored URL and clear it
                 NavigationManager.NavigateTo(UserSession.RedirectUrl);
-                UserSession.RedirectUrl = null; // Clear the redirect URL after navigating
+                UserSession.RedirectUrl = null;
             }
             else
             {
-                // Default redirect if no intended URL
                 NavigationManager.NavigateTo("/");
             }
         }
         else
         {
-            loginError = "Invalid email or password";
+            // Salasana ei täsmää
+            loginError = "Virheellinen sähköposti tai salasana.";
         }
     }
 

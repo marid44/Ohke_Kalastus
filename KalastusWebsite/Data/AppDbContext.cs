@@ -14,20 +14,34 @@ namespace KalastusWebsite.Data
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Media> MediaFiles { get; set; }
         public DbSet<MediaComment> MediaComments { get; set; }
+
         public DbSet<Conversation> Conversations { get; set; } // Keskustelut
         public DbSet<Comment> Comments { get; set; } // Kommentit
         public DbSet<Vote> Votes { get; set; } // Äänet
+
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+
+        public DbSet<Event> Events { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlite("Data Source=app.db");
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Conversation ja Comments relaatio
+
+            // Suhde: Conversation <-> Comments
+
             modelBuilder.Entity<Conversation>()
                 .HasMany(c => c.Comments)
                 .WithOne(c => c.Conversation)
                 .HasForeignKey(c => c.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
 
             // Vote-entiteetin konfigurointi
             modelBuilder.Entity<Vote>(entity =>
@@ -55,6 +69,7 @@ namespace KalastusWebsite.Data
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired(false);
             });
+
         }
     }
 }

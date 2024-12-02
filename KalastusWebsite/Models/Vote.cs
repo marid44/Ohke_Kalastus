@@ -6,6 +6,7 @@ namespace KalastusWebsite.Models
 {
     public class Vote
     {
+
         public int Id { get; set; }
         public int UserId { get; set; }
         public int? ConversationId { get; set; }
@@ -15,5 +16,6 @@ namespace KalastusWebsite.Models
 
         public Conversation? Conversation { get; set; }
         public Comment? Comment { get; set; }
+
     }
 }

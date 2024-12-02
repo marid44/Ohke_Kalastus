@@ -1,0 +1,70 @@
+@page "/kartta"
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+<h3>Kalastus kartta</h3>
+
+<!-- Search Bar and Button -->
+<div style="margin-bottom: 10px;">
+    <input id="searchInput" type="text" placeholder="Enter location" style="width: 300px; padding: 5px;" />
+    <button @onclick="PerformSearch" style="padding: 5px;">Search</button>
+</div>
+
+<div id="map" style="height: 80vh; width: 100%;"></div>
+
+@code {
+    private string apiKey;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            apiKey = Configuration["Maanmittauslaitos:ApiKey"]; // Ensure API key is set in appsettings.json
+            await JSRuntime.InvokeVoidAsync("initializeMap", apiKey);
+
+            // Automatically toggle the "Rivers" layer on
+            await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", true);
+        }
+    }
+
+    private async Task PerformSearch()
+    {
+        // Get the value of the search input
+        var searchQuery = await JSRuntime.InvokeAsync<string>("eval", "document.getElementById('searchInput').value");
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // Call the JavaScript function to search the location
+            await JSRuntime.InvokeVoidAsync("searchLocation", searchQuery, apiKey);
+        }
+    }
+
+    private async Task ToggleRivers(ChangeEventArgs e)
+    {
+        bool isChecked = (bool)e.Value;
+        await JSRuntime.InvokeVoidAsync("toggleLayer", "rivers", isChecked);
+    }
+}
+
+<style>
+    #searchInput {
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    button {
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+</style>

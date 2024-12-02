@@ -1,80 +1,271 @@
 @page "/media-gallery"
-@using KalastusWebsite.Services
 @using KalastusWebsite.Models
 @using KalastusWebsite.Data
 @inject AppDbContext DbContext
-@inject UserSession UserSession
 @inject NavigationManager NavigationManager
-@inject IWebHostEnvironment Environment
 @using Microsoft.EntityFrameworkCore
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <h1>Selaa käyttäjien kuvia ja videoita</h1>
 
-@if (mediaFiles.Any())
+@if (mediaFiles != null && mediaFiles.Any())
 {
     <div class="media-gallery">
         @foreach (var media in mediaFiles)
         {
             <div class="media-item">
-                @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
-                {
-                    <video controls>
-                        <source src="@media.FilePath" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                }
-                else
-                {
-                    <img src="@media.FilePath" alt="Media kuva" />
-                }
+                <a href="/image/@media.Id">
+                    @if (media.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <video controls class="media-display">
+                            <source src="@media.FilePath" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                    else
+                    {
+                        <img src="@media.FilePath" alt="Media kuva" class="media-display" />
+                    }
+                </a>
 
-                <p><strong>Lähettänyt:</strong> @media.UploadedBy</p>
+                <!-- Lähettäjän nimi on linkitetty käyttäjän profiiliin -->
+                <p><strong>Lähettänyt:</strong>
+                    <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
+                </p>
+
+                <div class="vote-buttons">
+                    <button @onclick="() => ToggleVote(media.Id, true)"
+                        class="vote-button @(IsUpVote(media.Id) ? "active upvote" : "upvote")">
+                        👍 @GetVoteCount(media.Id, true)
+                    </button>
+                    <button @onclick="() => ToggleVote(media.Id, false)"
+                        class="vote-button @(IsDownVote(media.Id) ? "active downvote" : "downvote")">
+                        👎 @GetVoteCount(media.Id, false)
+                    </button>
+                </div>
             </div>
         }
     </div>
 }
-else
+else if (mediaFiles != null)
 {
     <p>Ei ladattuja kuvia tai videoita.</p>
 }
+else
+{
+    <p>Ladataan tietoja...</p>
+}
 
 <style>
+    /* Gallerian asettelu */
     .media-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        /* Joustavampi sarakeleveys */
+        gap: 10px;
+        /* Pienempi välimatka elementtien välillä */
+        margin: 0 auto;
+        /* Keskittää koko gallerian */
+        padding: 5px;
+        /* Pienempi gallerian sisäinen tila */
+        max-width: 1000px;
+        /* Rajaa gallerian maksimileveyden */
     }
 
+    /* Yksittäinen media-osa */
     .media-item {
-        border: 1px solid #ccc;
+        border: 1px solid #ddd;
         border-radius: 8px;
-        padding: 10px;
-        width: 250px;
+        background-color: #f9f9f9;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-        background-color: white;
+        padding: 8px;
+        width: 100%;
+        max-width: 200px;
+        /* Elementin maksimileveys */
     }
 
+    /* Hover-efekti */
+    .media-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Media-elementit */
     .media-item img,
     .media-item video {
         max-width: 100%;
+        max-height: 150px;
+        border-radius: 6px;
+        margin-bottom: 5px;
+    }
+
+    /* Lähettäjän tiedot */
+    .media-item p {
+        margin: 3px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .media-item a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 13px;
+    }
+
+    .media-item a:hover {
+        text-decoration: underline;
+    }
+
+    /* Äänestysnapit */
+    .vote-buttons {
+        display: flex;
+        gap: 5px;
+        /* Väli painikkeiden välillä */
+        justify-content: center;
+        margin-top: 3px;
+    }
+
+    .vote-button {
+        padding: 6px 10px;
+        font-size: 12px;
+        border: none;
         border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .vote-button.upvote {
+        background-color: #f0f0f0;
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .vote-button.downvote {
+        background-color: #f0f0f0;
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .vote-button.active.upvote {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .vote-button.active.downvote {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    /* Painikkeen hover-animaatio */
+    .vote-button:hover {
+        background-color: #ddd;
     }
 </style>
 
+
 @code {
     private List<Media> mediaFiles = new();
+    private Dictionary<int, bool?> userVotes = new();
+    private string currentUserId;
+    private bool isVoting = false;
 
     protected override async Task OnInitializedAsync()
     {
+        currentUserId = await GetCurrentUserIdAsync();
+        await LoadMediaFilesAsync();
+        await LoadUserVotesAsync();
+    }
+
+    private async Task<string> GetCurrentUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        return user.Identity?.IsAuthenticated == true
+        ? user.FindFirst(c => c.Type == "sub")?.Value ?? Guid.NewGuid().ToString()
+        : Guid.NewGuid().ToString();
+    }
+
+    private async Task LoadMediaFilesAsync()
+    {
+        mediaFiles = await DbContext.MediaFiles
+        .Include(m => m.Votes)
+        .ToListAsync();
+    }
+
+    private async Task LoadUserVotesAsync()
+    {
+        var votes = await DbContext.Votes
+        .Where(v => v.UserId == currentUserId)
+        .ToListAsync();
+
+        userVotes = votes.ToDictionary(v => v.MediaId, v => (bool?)v.IsUpVote);
+    }
+
+    private async Task ToggleVote(int mediaId, bool isUpVote)
+    {
+        if (isVoting) return; // Estä useat peräkkäiset äänestykset
+        isVoting = true;
+
         try
         {
-            mediaFiles = await DbContext.MediaFiles.ToListAsync();
+            var existingVote = await DbContext.Votes
+            .FirstOrDefaultAsync(v => v.MediaId == mediaId && v.UserId == currentUserId);
+
+            if (existingVote != null)
+            {
+                if (existingVote.IsUpVote == isUpVote)
+                {
+                    // Poista ääni, jos se on samanlainen
+                    DbContext.Votes.Remove(existingVote);
+                    userVotes[mediaId] = null;
+                }
+                else
+                {
+                    // Päivitä ääni vastakkaiseksi
+                    existingVote.IsUpVote = isUpVote;
+                    DbContext.Votes.Update(existingVote);
+                    userVotes[mediaId] = isUpVote;
+                }
+            }
+            else
+            {
+                // Lisää uusi ääni
+                var newVote = new Vote
+                    {
+                        MediaId = mediaId,
+                        UserId = currentUserId,
+                        IsUpVote = isUpVote
+                    };
+                DbContext.Votes.Add(newVote);
+                userVotes[mediaId] = isUpVote;
+            }
+
+            await DbContext.SaveChangesAsync();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Virhe ladattaessa medioita: {ex.Message}");
+            Console.WriteLine($"Virhe äänestäessä: {ex.Message}");
         }
+        finally
+        {
+            isVoting = false;
+        }
+    }
+
+    private bool IsUpVote(int mediaId) => userVotes.TryGetValue(mediaId, out var vote) && vote == true;
+    private bool IsDownVote(int mediaId) => userVotes.TryGetValue(mediaId, out var vote) && vote == false;
+    private int GetVoteCount(int mediaId, bool isUpVote)
+    {
+        var media = mediaFiles.FirstOrDefault(m => m.Id == mediaId);
+        return media?.Votes.Count(v => v.IsUpVote == isUpVote) ?? 0;
     }
 }

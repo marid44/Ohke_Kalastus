@@ -48,7 +48,8 @@
         UserSession.Username = string.Empty;
         UserSession.IsLoggedIn = false;
 
-        // Redirect to home or login page
+        // Redirect to home or login page and force it afater logout
+
         NavigationManager.NavigateTo("/", forceLoad: true);
     }
 

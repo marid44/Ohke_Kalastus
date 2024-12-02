@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using KalastusWebsite.Services
 @using KalastusWebsite.Data
 @using KalastusWebsite.Models
@@ -8,6 +8,7 @@
 @inject AppDbContext _context
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
+
 
 <div class="hero">
     <h1>Kalastajien yhteisö</h1>
@@ -31,10 +32,13 @@
     </div>
 
     <div class="action-buttons">
+
+        <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
         <button class="btn-discussion" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-view" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
-        <button class="btn-media" @onclick="NavigateToMedia">Lisää kuvia</button>
+        <button class="btn-media" @onclick="NavigateToMedia">Mediat</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
+
     </div>
 
     <div class="recent-conversations">
@@ -64,6 +68,18 @@
         </div>
     </div>
 </div>
+
+<div class="action-buttons">
+    <button class="btn-primary" @onclick="NavigateToEvents">Tapahtumat</button>
+</div>
+@code {
+    private void NavigateToEvents()
+    {
+        NavManager.NavigateTo("/events");
+    }
+
+    [Inject] private NavigationManager NavManager { get; set; }
+}
 
 <style>
     /* Existing button styles */
@@ -255,4 +271,11 @@
     {
         NavigationManager.NavigateTo("/media-gallery");
     }
-}>
+
+}
+    private void NavigateToKartta()
+    {
+        NavigationManager.NavigateTo("/kartta");
+    }
+}
+
