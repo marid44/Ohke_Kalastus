@@ -16,6 +16,13 @@ namespace KalastusWebsite.Data
         public DbSet<MediaComment> MediaComments { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Comment> Comments { get; set; }
+
+        public DbSet<Event> Events { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlite("Data Source=app.db");
+
         public DbSet<Vote> Votes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,6 +54,7 @@ namespace KalastusWebsite.Data
                 .WithMany(m => m.Comments)
                 .HasForeignKey(mc => mc.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }
