@@ -240,10 +240,12 @@
     }
 
     /* Painikkeiden yksilölliset värit */
-    .btn-register {
+        .btn-register {
         background-color: #007bff;
         /* Sininen */
         color: white;
+        z-index: 2; /* Ensure the button is above the dark layer */
+        position: relative; /* Required for z-index to work */
     }
 
     .btn-register:hover {
