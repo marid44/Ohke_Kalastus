@@ -21,6 +21,22 @@ main {
     align-items: center;
 }
 
+.toggle-sidebar-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: background-color 0.3s ease;
+    margin-right: 10px;
+}
+
+.toggle-sidebar-btn:hover {
+    background-color: #0056b3;
+}
+
 .top-row ::deep a,
 .top-row .btn-link {
     white-space: nowrap;

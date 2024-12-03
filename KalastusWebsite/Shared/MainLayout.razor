@@ -18,7 +18,9 @@
             {
                 <button class="btn btn-link" @onclick="NavigateToRegister">Rekisteröidy</button>
                 <button class="btn btn-link" @onclick="NavigateToLogin">Kirjaudu</button>
+                
             }
+            <button class="toggle-sidebar-btn" @onclick="ToggleSidebar">☰</button>
         </div>
 
         <article class="content px-4">
@@ -26,7 +28,7 @@
         </article>
     </main>
 
-    <div class="sidebar">
+    <div class="sidebar" style="@(isSidebarVisible ? "display: block;" : "display: none;")">
         <NavMenu />
     </div>
 </div>
@@ -34,7 +36,14 @@
 @code {
     [Inject] private NavigationManager NavigationManager { get; set; }
 
-    // Method to navigate to the Home/Index page
+    private bool isSidebarVisible = false; // Tracks whether the sidebar is visible
+
+    // Toggles the visibility of the sidebar
+    private void ToggleSidebar()
+    {
+        isSidebarVisible = !isSidebarVisible;
+    }
+
     private void NavigateToHome()
     {
         NavigationManager.NavigateTo("/");
