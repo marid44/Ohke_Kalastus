@@ -1,10 +1,13 @@
 @page "/"
 @using KalastusWebsite.Services
+@using KalastusWebsite.Data
+@using KalastusWebsite.Models
+@inject AppDbContext _context
 @inject UserSession UserSession
 @inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
-
 
 <div class="hero">
     <h1>Kalastajien yhteisö</h1>
@@ -28,27 +31,97 @@
     </div>
 
     <div class="action-buttons">
-
         <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
         <button class="btn-discussion" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
         <button class="btn-view" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
         <button class="btn-media" @onclick="NavigateToMedia">Mediat</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
         <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
-
     </div>
 </div>
 
-<div class="action-buttons">
-    <button class="btn-primary" @onclick="NavigateToEvents">Tapahtumat</button>
-</div>
-@code {
-    private void NavigateToEvents()
+<div class="latest-conversations">
+    <h3>Uusimmat Keskustelut</h3>
+    @if (latestConversations != null && latestConversations.Any())
     {
-        NavManager.NavigateTo("/events");
+        <div class="conversation-list">
+            @foreach (var conversation in latestConversations)
+            {
+                <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
+                    <h4>@conversation.Title</h4>
+                    <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                    </p>
+                    <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
+                             conversation.Content)</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Ei keskusteluja saatavilla.</p>
+    }
+</div>
+
+@code {
+    private List<Conversation> latestConversations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the latest 5 conversations
+        latestConversations = await _context.Conversations
+        .OrderByDescending(c => c.CreatedAt)
+        .Take(5)
+        .ToListAsync();
     }
 
-    [Inject] private NavigationManager NavManager { get; set; }
+    private void NavigateToConversation(int conversationId)
+    {
+        NavigationManager.NavigateTo($"/conversation/{conversationId}");
+    }
+
+    private void NavigateToCreateDiscussion()
+    {
+        if (UserSession.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo("/add-conversation");
+        }
+        else
+        {
+            UserSession.RedirectUrl = "/add-conversation";
+            NavigationManager.NavigateTo("/login");
+        }
+    }
+
+    private void NavigateToDiscussions()
+    {
+        NavigationManager.NavigateTo("/conversations");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/add-user");
+    }
+
+    private void NavigateToMedia()
+    {
+        NavigationManager.NavigateTo("/add-media");
+    }
+
+    private void NavigateToMediaGallery()
+    {
+        NavigationManager.NavigateTo("/media-gallery");
+    }
+
+    private void NavigateToKartta()
+    {
+        NavigationManager.NavigateTo("/kartta");
+    }
+
+    private void NavigateToFishList()
+    {
+        NavigationManager.NavigateTo("/fishlist");
+    }
 }
 
 <style>
@@ -184,49 +257,120 @@
         gap: 10px;
         margin-top: 20px;
     }
+
+    .latest-conversations {
+        width: 50%;
+        margin: 20px auto;
+        /* Centers the section horizontally */
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* Centers the content inside */
+    }
+
+    .latest-conversations h3 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+        text-align: center;
+        /* Centers the heading text */
+    }
+
+    .conversation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+        /* Ensures the conversation list stretches fully inside the container */
+        max-height: 260px;
+        /* Height for exactly 2 boxes (adjust based on actual box height) */
+        overflow-y: auto;
+        /* Adds a vertical scrollbar when content exceeds the height */
+        scrollbar-width: thin;
+        /* Customizes the scrollbar width (for modern browsers) */
+        scrollbar-color: #c4c4c4 #f1f1f1;
+        /* Sets scrollbar colors (optional) */
+        padding-right: 10px;
+    }
+
+
+    .conversation-list::-webkit-scrollbar {
+        width: 8px;
+        /* Width of the scrollbar */
+    }
+
+    .conversation-list::-webkit-scrollbar-thumb {
+        background: #c4c4c4;
+        /* Color of the scrollbar thumb */
+        border-radius: 4px;
+        /* Rounded corners for the scrollbar thumb */
+    }
+
+    .conversation-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        /* Color of the scrollbar track */
+    }
+
+    .conversation-box {
+        width: 100%;
+        /* Ensures the box fits inside the container */
+        padding: 20px;
+        /* Increased padding for a balanced look */
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        overflow: hidden;
+        /* Prevents any overflowing content */
+        text-overflow: ellipsis;
+        /* Adds ellipsis for long text */
+        white-space: nowrap;
+        /* Keeps text on a single line (remove if multi-line ellipsis is needed) */
+        min-height: 120px;
+        /* Ensures a consistent height for all boxes */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        /* Distributes content vertically */
+    }
+
+    .conversation-box:hover {
+        background-color: #e0e0e0;
+    }
+
+    .conversation-box h4 {
+        margin: 0 0 10px 0;
+        overflow: hidden;
+        /* Prevents overflow in the title */
+        text-overflow: ellipsis;
+        /* Adds ellipsis for long titles */
+        white-space: nowrap;
+        /* Keeps title on one line */
+        font-size: 1.1em;
+        /* Adjusted font size for emphasis */
+        font-weight: bold;
+    }
+
+    .conversation-box p {
+        margin: 5px 0;
+        color: #666;
+        overflow: hidden;
+        /* Prevents overflow in the text content */
+        text-overflow: ellipsis;
+        /* Adds ellipsis for long content */
+        white-space: nowrap;
+        /* Keeps content on one line (remove if multi-line ellipsis is needed) */
+        font-size: 0.9em;
+        /* Slightly smaller font for descriptive text */
+    }
+
+    .conversation-box small {
+        color: #999;
+        font-size: 0.8em;
+        /* Smaller font for metadata (e.g., username and date) */
+    }
 </style>
-
-@code {
-    private void NavigateToCreateDiscussion()
-    {
-        if (UserSession.IsLoggedIn)
-        {
-            NavigationManager.NavigateTo("/add-conversation");
-        }
-        else
-        {
-            UserSession.RedirectUrl = "/add-conversation";
-            NavigationManager.NavigateTo("/login");
-        }
-    }
-
-    private void NavigateToDiscussions()
-    {
-        NavigationManager.NavigateTo("/conversations");
-    }
-
-    private void NavigateToRegister()
-    {
-        NavigationManager.NavigateTo("/add-user");
-    }
-
-    private void NavigateToMedia()
-    {
-        NavigationManager.NavigateTo("/add-media");
-    }
-
-    private void NavigateToMediaGallery()
-    {
-        NavigationManager.NavigateTo("/media-gallery");
-    }
-
-    private void NavigateToKartta()
-    {
-        NavigationManager.NavigateTo("/kartta");
-    }
-
-    private void NavigateToFishList()
-    {
-        NavigationManager.NavigateTo("/fishlist");
-    }
-}
