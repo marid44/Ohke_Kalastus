@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using KalastusWebsite.Data;
 using KalastusWebsite.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,17 @@ builder.Services.AddHttpClient("API", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5129/");
 });
+
+// Add authentication with cookies
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+        options.SlidingExpiration = true;
+        options.LoginPath = "/login"; // Path to the login page
+        options.LogoutPath = "/logout"; // Optional: Path to logout
+        options.AccessDeniedPath = "/access-denied"; // Optional: Path for access denied
+    });
 
 // Add controllers for APIs
 builder.Services.AddControllers().AddNewtonsoftJson();
@@ -51,6 +63,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Add authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers(); // Map API controllers here, after middleware is set up
 app.MapBlazorHub();

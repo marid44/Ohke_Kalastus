@@ -200,6 +200,42 @@
     a:hover {
         text-decoration: underline;
     }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+
+    @@keyframes
+    spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 
 
@@ -311,11 +347,30 @@ else
     private const long MaxFileSize = 1024L * 1024 * 1024; // 1 GB tiedostokoko
     private Dictionary<int, string> newComment = new();
     private string? ErrorMessage;
+    private bool isSessionVerified = false;
+
+    // Add loading state
+    private bool isLoading = false;
+    private bool isUploading = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            isLoading = true;
+            StateHasChanged();
+
+            // Verify session first
+            if (!UserSession.IsLoggedIn)
+            {
+                UserSession.RedirectUrl = "/add-media";
+                NavigationManager.NavigateTo("/login");
+                return;
+            }
+
+            isSessionVerified = true;
+
+            // Load data only if logged in
             mediaFiles = await DbContext.MediaFiles
             .Include(m => m.Comments)
             .ToListAsync();
@@ -329,7 +384,13 @@ else
         {
             ErrorMessage = $"Virhe tietojen lataamisessa: {ex.Message}";
         }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
+
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -348,7 +409,12 @@ else
 
     private async Task OnUploadButtonClicked()
     {
-        if (selectedFile != null && mediaFiles.Count < 20)
+        if (!isSessionVerified || selectedFile == null || mediaFiles.Count >= 20) return;
+
+        isUploading = true;
+        StateHasChanged();
+
+        try
         {
             var uploadFolder = Path.Combine(Environment.WebRootPath, "uploads");
             if (!Directory.Exists(uploadFolder))
@@ -358,33 +424,34 @@ else
 
             var filePath = Path.Combine(uploadFolder, selectedFile.Name);
 
-            try
-            {
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(stream);
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(stream);
 
-                var media = new Media
-                    {
-                        FileName = selectedFile.Name,
-                        FilePath = $"/uploads/{selectedFile.Name}",
-                        UploadedBy = UserSession.Username,
-                        Comments = new List<MediaComment>()
-                    };
+            var media = new Media
+                {
+                    FileName = selectedFile.Name,
+                    FilePath = $"/uploads/{selectedFile.Name}",
+                    UploadedBy = UserSession.Username,
+                    Comments = new List<MediaComment>()
+                };
 
-                DbContext.MediaFiles.Add(media);
-                await DbContext.SaveChangesAsync();
+            DbContext.MediaFiles.Add(media);
+            await DbContext.SaveChangesAsync();
 
-                mediaFiles.Add(media);
-                newComment[media.Id] = string.Empty;
+            mediaFiles.Add(media);
+            newComment[media.Id] = string.Empty;
 
-                selectedFile = null;
-                ErrorMessage = null;
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Tiedoston tallennus epäonnistui: {ex.Message}";
-            }
+            selectedFile = null;
+            ErrorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Tiedoston tallennus epäonnistui: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
         }
     }
 
@@ -458,4 +525,19 @@ else
     {
         public IBrowserFile? File { get; set; }
     }
+}
+
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Ladataan...</p>
+    </div>
+}
+else if (isUploading)
+{
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Ladataan mediaa...</p>
+    </div>
 }
