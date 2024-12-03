@@ -67,19 +67,101 @@
     </div>
 </div>
 
+<div class="recent-media">
+    <h3>Uusimmat Kuvat</h3>
+    <div class="media-carousel">
+        <button @onclick="MoveBackward" class="carousel-arrow left-arrow">⬅</button>
+        <div class="media-items">
+            @if (recentMediaFiles != null && recentMediaFiles.Any())
+            {
+                @foreach (var media in visibleMediaFiles)
+                {
+                    <div class="media-box">
+                        <a href="/image/@media.Id">
+                            <img src="@media.FilePath" alt="Recent media" class="media-image" />
+                        </a>
+                        <p>
+                            <small>
+                                Lähettänyt:
+                                <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
+                            </small>
+                        </p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei uusia kuvia saatavilla.</p>
+            }
+        </div>
+        <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
+    </div>
+</div>
 
 
 @code {
     private List<Conversation> latestConversations;
 
+    private List<Media> recentMediaFiles;
+    private List<Media> visibleMediaFiles = new(); // Tracks three currently visible images
+    private int currentIndex = 0; // Tracks the start index of the visible images
+
     protected override async Task OnInitializedAsync()
     {
+        // Fetch the latest media files
+        recentMediaFiles = await _context.MediaFiles
+        .OrderByDescending(m => m.UploadedAt)
+        .Take(5) // Fetch more files to allow scrolling
+        .ToListAsync();
+
         // Fetch the latest 5 conversations
         latestConversations = await _context.Conversations
-        .OrderByDescending(c => c.CreatedAt)
-        .Take(5)
+        .OrderByDescending(c => c.CreatedAt) // Sort by the CreatedAt timestamp
+        .Take(5) // Fetch only the 5 most recent conversations
         .ToListAsync();
+
+        // Set the initial visible media files
+        UpdateVisibleMedia();
     }
+
+    private void MoveForward()
+    {
+        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        {
+            // Increment the index and loop back
+            currentIndex = (currentIndex + 1) % recentMediaFiles.Count;
+            UpdateVisibleMedia();
+        }
+    }
+
+    private void MoveBackward()
+    {
+        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        {
+            // Decrement the index and loop back
+            currentIndex = (currentIndex - 1 + recentMediaFiles.Count) % recentMediaFiles.Count;
+            UpdateVisibleMedia();
+        }
+    }
+
+    private void UpdateVisibleMedia()
+    {
+        if (recentMediaFiles.Count >= 3)
+        {
+            visibleMediaFiles = new List<Media>
+            {
+                recentMediaFiles[currentIndex],
+                recentMediaFiles[(currentIndex + 1) % recentMediaFiles.Count],
+                recentMediaFiles[(currentIndex + 2) % recentMediaFiles.Count]
+            };
+        }
+        else
+        {
+            // If fewer than 3 media files, display all available files
+            visibleMediaFiles = recentMediaFiles.ToList();
+        }
+    }
+
 
     private void NavigateToConversation(int conversationId)
     {
@@ -129,6 +211,7 @@
         NavigationManager.NavigateTo("/fishlist");
     }
 }
+
 
 <style>
     /* Yhteinen tyyli kaikille painikkeille */
@@ -396,5 +479,97 @@
 
     .conversation-buttons .btn-all:hover {
         background-color: #0056b3;
+    }
+
+
+    /*Media stuff*/
+
+    /* Recent Media Section */
+    .recent-media {
+        width: 50%;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .media-carousel {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+
+    .media-items {
+        display: flex;
+        gap: 15px;
+        overflow: hidden;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .media-box {
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        width: 45%;
+        max-width: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .media-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .media-image {
+        width: 150px;
+        /* Fixed width for all images */
+        height: 150px;
+        /* Fixed height for all images */
+        object-fit: cover;
+        /* Ensures the image fills the box while maintaining aspect ratio */
+        border-radius: 6px;
+        margin-bottom: 5px;
+        background-color: #f1f1f1;
+        /* Placeholder color for any unloaded images */
+    }
+
+
+    .carousel-arrow {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .carousel-arrow:hover {
+        background-color: #0056b3;
+        transform: scale(1.1);
+    }
+
+    .left-arrow {
+        margin-right: auto;
+    }
+
+    .right-arrow {
+        margin-left: auto;
     }
 </style>
