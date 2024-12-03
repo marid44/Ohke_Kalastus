@@ -9,6 +9,8 @@
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
 
+
+
 <div class="hero">
     <h1>Kalastajien yhteisö</h1>
     @if (!UserSession.IsLoggedIn)
@@ -114,23 +116,52 @@
     private List<Media> recentMediaFiles;
     private List<Media> visibleMediaFiles = new(); // Tracks three currently visible images
     private int currentIndex = 0; // Tracks the start index of the visible images
-
+    private string errorMessage;
+    private bool isLoaded = false; 
+    
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the latest media files
-        recentMediaFiles = await _context.MediaFiles
-        .OrderByDescending(m => m.UploadedAt)
-        .Take(5) // Fetch more files to allow scrolling
-        .ToListAsync();
+        try
+        {
+            // Try to load session with timeout
+            var timeoutTask = Task.Delay(2000); // nosta millisekunti lukua jos tulee erroria sivun latauksesta
+            var loadingTask = WaitForSession();
+            
+            var completedTask = await Task.WhenAny(timeoutTask, loadingTask);
+            if (completedTask == timeoutTask)
+            {
+                errorMessage = "Sivun lataus epäonnistui. Yritä päivittää sivu.";
+                return;
+            }
 
-        // Fetch the latest 5 conversations
-        latestConversations = await _context.Conversations
-        .OrderByDescending(c => c.CreatedAt) // Sort by the CreatedAt timestamp
-        .Take(5) // Fetch only the 5 most recent conversations
-        .ToListAsync();
+            // Fetch data
+            recentMediaFiles = await _context.MediaFiles
+                .OrderByDescending(m => m.UploadedAt)
+                .Take(5)
+                .ToListAsync();
 
-        // Set the initial visible media files
-        UpdateVisibleMedia();
+            latestConversations = await _context.Conversations
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(5)
+                .ToListAsync();
+
+            UpdateVisibleMedia();
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Virhe: {ex.Message}";
+        }
+    }
+
+    private async Task WaitForSession()
+    {
+        var attempts = 0;
+        while (!UserSession.IsLoaded && attempts < 50) // Max 5 seconds (100ms * 50)
+        {
+            await Task.Delay(100);
+            attempts++;
+        }
     }
 
     private void MoveForward()

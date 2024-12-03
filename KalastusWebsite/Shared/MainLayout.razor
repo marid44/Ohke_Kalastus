@@ -49,18 +49,28 @@
         NavigationManager.NavigateTo("/");
     }
 
+    private bool firstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (this.firstRender)
+        {
+            this.firstRender = false;
+            await UserSession.LoadSession();
+            StateHasChanged();
+        }
+    }
+
     private async Task Logout()
     {
-        // Clear the user session
-        UserSession.Username = string.Empty;
-        UserSession.UserId = 0; // Reset UserId
-        UserSession.IsLoggedIn = false;
-
-        // Clear the map and marker count using JavaScript
+        // First clear map and markers
         await JSRuntime.InvokeVoidAsync("clearMap");
         await JSRuntime.InvokeVoidAsync("resetMarkerCount");
 
-        // Redirect to the home page
+        // Then clear the session
+        await UserSession.ClearSession();
+
+        // Finally redirect
         NavigationManager.NavigateTo("/", forceLoad: true);
     }
 
