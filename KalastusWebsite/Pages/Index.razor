@@ -291,6 +291,7 @@
         border-radius: 10px;
         margin-bottom: 20px;
         position: relative;
+        z-index: 0;
     }
 
     .hero::after {
@@ -300,19 +301,15 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: rgba(0, 0, 0, 0.5); /* Transparent musta kerros */
         border-radius: 10px;
-        z-index: -1;
+        z-index: 1; /* Asetetaan tekstin alle */
     }
 
-    .hero h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-    }
-
+    .hero h1,
     .hero p {
-        font-size: 1.2em;
-        margin-bottom: 20px;
+        position: relative;
+        z-index: 2; /* Varmistetaan, että teksti on tummennuksen yläpuolella */
     }
 
     .welcome-message {
