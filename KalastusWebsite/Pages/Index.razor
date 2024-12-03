@@ -18,52 +18,56 @@
     }
 </div>
 
-<div class="container">
-    <div class="welcome-message">
-        @if (UserSession.IsLoggedIn)
-        {
-            <h2>Terve, @UserSession.Username!</h2>
-        }
-        else
-        {
-            <h2>Tervetuloa!</h2>
-        }
-    </div>
+<div class="main-container">
+    
 
-    <div class="action-buttons">
-        <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
-        <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
-    </div>
-</div>
-
-<div class="latest-conversations">
-    <h3>Uusimmat Keskustelut</h3>
-    <div class="conversation-container">
-        <div class="conversation-list">
-            @if (latestConversations != null && latestConversations.Any())
+    <div class="left-section">
+        <div class="welcome-message">
+            @if (UserSession.IsLoggedIn)
             {
-                @foreach (var conversation in latestConversations)
-                {
-                    <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
-                        <h4>@conversation.Title</h4>
-                        <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
-                        </p>
-                        <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
-                                 conversation.Content)</p>
-                    </div>
-                }
+                <h2>Terve, @UserSession.Username!</h2>
             }
             else
             {
-                <p>Ei keskusteluja saatavilla.</p>
+                <h2>Tervetuloa!</h2>
             }
         </div>
-        <div class="conversation-buttons">
-            <button class="btn-new" @onclick="NavigateToCreateDiscussion">+ Uusi keskustelu</button>
-            <button class="btn-all" @onclick="NavigateToDiscussions">Kaikki keskustelut</button>
+        <div class="side-buttons">
+            <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
+            <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
+        </div>
+    </div>
+
+    <div class="latest-conversations">
+        <h3>Uusimmat Keskustelut</h3>
+        <div class="conversation-container">
+            <div class="conversation-list">
+                @if (latestConversations != null && latestConversations.Any())
+                {
+                    @foreach (var conversation in latestConversations)
+                    {
+                        <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
+                            <h4>@conversation.Title</h4>
+                            <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                            </p>
+                            <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
+                                    conversation.Content)</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Ei keskusteluja saatavilla.</p>
+                }
+            </div>
+            <div class="conversation-buttons">
+                <button class="btn-new" @onclick="NavigateToCreateDiscussion">+ Uusi keskustelu</button>
+                <button class="btn-all" @onclick="NavigateToDiscussions">Kaikki keskustelut</button>
+            </div>
         </div>
     </div>
 </div>
+
 
 <div class="recent-media">
     <h3>Uusimmat Kuvat</h3>
@@ -311,13 +315,83 @@
         margin-bottom: 20px;
     }
 
+    .welcome-message {
+        text-align: center;
+        margin-bottom: 20px; /* Increased margin at the bottom for more spacing */
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        padding: 15px 30px; /* Slightly increased padding for better alignment and spacing */
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 300px; /* Set a fixed width for consistency */
+        margin-left:  40px;
+    }
+
+    .welcome-message h2 {
+        color: #333;
+        font-size: 1.7em; /* Slightly larger font for emphasis */
+        margin: 0;
+    }
+
+
+
+    .main-container {
+        display: flex;
+        gap: 20px; /* Space between the left section and latest conversations */
+        align-items: flex-start; /* Top alignment */
+    }
+
+
     .container {
         text-align: center;
         font-family: Arial, sans-serif;
         background-color: #f4f4f9;
-        padding: 20px;
+        padding: 10px 20px;
+        /* Reduced padding */
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        width: fit-content;
+        /* Automatically adjust width based on content */
+        margin: 0 auto;
+        /* Center the container horizontally */
+    }
+
+    .side-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Spacing between buttons */
+        flex-shrink: 0; /* Prevents the buttons from shrinking */
+        padding-right: 20px; /* Adds padding to the right of the buttons */
+        margin-right: 40px; /* Increased margin to create more space between buttons and conversations */
+        margin-left: 40px
+    }
+
+    .side-buttons button {
+        padding: 15px 35px; /* Increased padding for a wider look */
+        font-size: 1.1em; /* Larger font size */
+        width: 300px; /* Adjusted button width */
+        border-radius: 8px; /* Slightly rounded corners */
+    }
+
+    /* Kartta button styling */
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    /* Kalalajit button styling */
+    .btn-profile {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-profile:hover {
+        background-color: #218838;
     }
 
     .welcome-message h2 {
@@ -333,17 +407,11 @@
     }
 
     .latest-conversations {
-        width: 50%;
-        margin: 20px auto;
-        /* Centers the section horizontally */
+        flex: 1; /* Allows the conversation section to take up the remaining space */
         padding: 20px;
         background-color: #f9f9f9;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        /* Centers the content inside */
     }
 
     .latest-conversations h3 {
