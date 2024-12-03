@@ -32,8 +32,6 @@
 
     <div class="action-buttons">
         <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
-        <button class="btn-discussion" @onclick="NavigateToCreateDiscussion">Luo keskustelu</button>
-        <button class="btn-view" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
         <button class="btn-media" @onclick="NavigateToMedia">Mediat</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
         <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
@@ -42,26 +40,34 @@
 
 <div class="latest-conversations">
     <h3>Uusimmat Keskustelut</h3>
-    @if (latestConversations != null && latestConversations.Any())
-    {
+    <div class="conversation-container">
         <div class="conversation-list">
-            @foreach (var conversation in latestConversations)
+            @if (latestConversations != null && latestConversations.Any())
             {
-                <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
-                    <h4>@conversation.Title</h4>
-                    <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
-                    </p>
-                    <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
-                             conversation.Content)</p>
-                </div>
+                @foreach (var conversation in latestConversations)
+                {
+                    <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
+                        <h4>@conversation.Title</h4>
+                        <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                        </p>
+                        <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
+                                 conversation.Content)</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Ei keskusteluja saatavilla.</p>
             }
         </div>
-    }
-    else
-    {
-        <p>Ei keskusteluja saatavilla.</p>
-    }
+        <div class="conversation-buttons">
+            <button class="btn-new" @onclick="NavigateToCreateDiscussion">+ Uusi keskustelu</button>
+            <button class="btn-all" @onclick="NavigateToDiscussions">Kaikki keskustelut</button>
+        </div>
+    </div>
 </div>
+
+
 
 @code {
     private List<Conversation> latestConversations;
@@ -150,26 +156,6 @@
 
     .btn-register:hover {
         background-color: #0056b3;
-    }
-
-    .btn-discussion {
-        background-color: #007bff;
-        /* Vihreä */
-        color: white;
-    }
-
-    .btn-discussion:hover {
-        background-color: #007bff;
-    }
-
-    .btn-view {
-        background-color: #007bff;
-        /* Keltainen */
-        color: rgb(255, 255, 255);
-    }
-
-    .btn-view:hover {
-        background-color: #007bff;
     }
 
     .btn-media {
@@ -279,23 +265,24 @@
         /* Centers the heading text */
     }
 
+    .conversation-container {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        /* Aligns content at the top */
+    }
+
     .conversation-list {
+        flex: 1;
         display: flex;
         flex-direction: column;
         gap: 15px;
-        width: 100%;
-        /* Ensures the conversation list stretches fully inside the container */
         max-height: 260px;
-        /* Height for exactly 2 boxes (adjust based on actual box height) */
         overflow-y: auto;
-        /* Adds a vertical scrollbar when content exceeds the height */
         scrollbar-width: thin;
-        /* Customizes the scrollbar width (for modern browsers) */
         scrollbar-color: #c4c4c4 #f1f1f1;
-        /* Sets scrollbar colors (optional) */
         padding-right: 10px;
     }
-
 
     .conversation-list::-webkit-scrollbar {
         width: 8px;
@@ -372,5 +359,42 @@
         color: #999;
         font-size: 0.8em;
         /* Smaller font for metadata (e.g., username and date) */
+    }
+
+    .conversation-buttons {
+        display: flex;
+        flex-direction: column;
+        /* Stack buttons vertically */
+        gap: 10px;
+        margin-left: 15px;
+    }
+
+    .conversation-buttons button {
+        padding: 10px 15px;
+        font-size: 0.9em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .conversation-buttons .btn-new {
+        background-color: #28a745;
+        /* Green */
+        color: white;
+    }
+
+    .conversation-buttons .btn-new:hover {
+        background-color: #218838;
+    }
+
+    .conversation-buttons .btn-all {
+        background-color: #007bff;
+        /* Blue */
+        color: white;
+    }
+
+    .conversation-buttons .btn-all:hover {
+        background-color: #0056b3;
     }
 </style>
