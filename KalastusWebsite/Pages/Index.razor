@@ -32,8 +32,6 @@
 
     <div class="action-buttons">
         <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
-        <button class="btn-media" @onclick="NavigateToMedia">Mediat</button>
-        <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
         <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
     </div>
 </div>
@@ -96,7 +94,14 @@
         </div>
         <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
     </div>
+
+    <!-- Action buttons for media -->
+    <div class="media-buttons">
+        <button class="btn-media" @onclick="NavigateToMedia">+ Lisää mediaa</button>
+        <button class="btn-gallery" @onclick="NavigateToMediaGallery">Kaikki kuvat</button>
+    </div>
 </div>
+
 
 
 @code {
@@ -571,5 +576,41 @@
 
     .right-arrow {
         margin-left: auto;
+    }
+
+    .media-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+    }
+
+    .media-buttons button {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-media {
+        background-color: #28a745;
+        /* Green for upload */
+        color: white;
+    }
+
+    .btn-media:hover {
+        background-color: #218838;
+    }
+
+    .btn-gallery {
+        background-color: #007bff;
+        /* Blue for browse */
+        color: white;
+    }
+
+    .btn-gallery:hover {
+        background-color: #0056b3;
     }
 </style>
