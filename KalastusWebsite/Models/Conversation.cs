@@ -21,6 +21,8 @@ namespace KalastusWebsite.Models
 
         // Kommentit, jotka liittyvät keskusteluun
         public List<Comment> Comments { get; set; } = new();
+
+        public ICollection<ConversationVote> Votes { get; set; } = new List<ConversationVote>();
     }
     public class Comment
     {

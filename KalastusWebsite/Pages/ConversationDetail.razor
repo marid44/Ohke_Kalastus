@@ -11,14 +11,28 @@
     [Parameter]
     public int Id { get; set; } // This will receive the conversation ID from the URL
 
+    private bool isLoading = true;
+
     private Conversation? conversation;
     private List<Comment> comments = new List<Comment>();
     private string newCommentText = string.Empty;
     private string? commentError;
 
+    private Dictionary<int, bool?> conversationVotes = new();
+    private Dictionary<int, bool?> commentVotes = new();
+    private bool isVoting = false;
+
+    private bool IsCommentUpVoted(int id) =>
+    commentVotes.TryGetValue(id, out var vote) && vote == true;
+
+    private bool IsCommentDownVoted(int id) =>
+    commentVotes.TryGetValue(id, out var vote) && vote == false;
+
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the conversation and associated comments
+        isLoading = true;
+
+        // Fetch the conversation and associated comments first
         conversation = await _context.Conversations.FindAsync(Id);
 
         if (conversation != null)
@@ -30,8 +44,138 @@
         }
         else
         {
-            // Redirect if conversation is not found
             NavigationManager.NavigateTo("/conversations");
+            return;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Move session loading to after first render
+            if (!UserSession.IsLoaded)
+            {
+                await UserSession.LoadSession();
+            }
+
+            await LoadVotesAsync();
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadVotesAsync()
+    {
+        if (!UserSession.IsLoggedIn) return;
+
+        var convVotes = await _context.ConversationVotes
+        .Where(v => v.UserId == UserSession.UserId.ToString())
+        .ToListAsync();
+
+        var comVotes = await _context.CommentVotes
+        .Where(v => v.UserId == UserSession.UserId.ToString())
+        .ToListAsync();
+
+        conversationVotes = convVotes.ToDictionary(v => v.ConversationId, v => (bool?)v.IsUpVote);
+        commentVotes = comVotes.ToDictionary(v => v.CommentId, v => (bool?)v.IsUpVote);
+    }
+
+    private async Task ToggleConversationVote(int conversationId, bool isUpVote)
+    {
+        if (!UserSession.IsLoggedIn || isVoting) return;
+        isVoting = true;
+
+        try
+        {
+            var vote = await _context.ConversationVotes
+            .FirstOrDefaultAsync(v => v.ConversationId == conversationId &&
+            v.UserId == UserSession.UserId.ToString());
+
+            if (vote != null)
+            {
+                if (vote.IsUpVote == isUpVote)
+                {
+                    _context.ConversationVotes.Remove(vote);
+                    conversationVotes[conversationId] = null;
+                }
+                else
+                {
+                    vote.IsUpVote = isUpVote;
+                    _context.ConversationVotes.Update(vote);
+                    conversationVotes[conversationId] = isUpVote;
+                }
+            }
+            else
+            {
+                var newVote = new ConversationVote
+                    {
+                        ConversationId = conversationId,
+                        UserId = UserSession.UserId.ToString(),
+                        IsUpVote = isUpVote
+                    };
+                _context.ConversationVotes.Add(newVote);
+                conversationVotes[conversationId] = isUpVote;
+            }
+
+            await _context.SaveChangesAsync();
+            StateHasChanged();
+        }
+        finally
+        {
+            isVoting = false;
+        }
+    }
+
+    private int GetCommentVoteCount(int commentId, bool isUpVote)
+    {
+        return _context.CommentVotes
+        .Count(v => v.CommentId == commentId && v.IsUpVote == isUpVote);
+    }
+
+    private async Task ToggleCommentVote(int commentId, bool isUpVote)
+    {
+        if (!UserSession.IsLoggedIn || isVoting) return;
+        isVoting = true;
+
+        try
+        {
+            var vote = await _context.CommentVotes
+            .FirstOrDefaultAsync(v => v.CommentId == commentId &&
+            v.UserId == UserSession.UserId.ToString());
+
+            if (vote != null)
+            {
+                if (vote.IsUpVote == isUpVote)
+                {
+                    _context.CommentVotes.Remove(vote);
+                    commentVotes[commentId] = null;
+                }
+                else
+                {
+                    vote.IsUpVote = isUpVote;
+                    _context.CommentVotes.Update(vote);
+                    commentVotes[commentId] = isUpVote;
+                }
+            }
+            else
+            {
+                var newVote = new CommentVote
+                    {
+                        CommentId = commentId,
+                        UserId = UserSession.UserId.ToString(),
+                        IsUpVote = isUpVote
+                    };
+                _context.CommentVotes.Add(newVote);
+                commentVotes[commentId] = isUpVote;
+            }
+
+            await _context.SaveChangesAsync();
+            StateHasChanged();
+        }
+        finally
+        {
+            isVoting = false;
         }
     }
 
@@ -61,60 +205,107 @@
         commentError = null;
         comments.Add(newComment);
     }
-}
 
-@if (conversation != null)
-{
-    <div class="conversation-detail">
-        <h2>@conversation.Title</h2>
-        <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
-        <p>@conversation.Content</p>
-    </div>
+    private bool IsConversationUpVoted(int id) =>
+    conversationVotes.TryGetValue(id, out var vote) && vote == true;
 
-    <h4>Kommentit</h4>
+    private bool IsConversationDownVoted(int id) =>
+    conversationVotes.TryGetValue(id, out var vote) && vote == false;
 
-    @if (comments.Any())
+    private int GetVoteCount(int conversationId, bool isUpVote)
     {
-        <div class="comments-section">
-            @foreach (var comment in comments)
-            {
-                <div class="comment">
-                    <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
-                    <p>@comment.Text</p>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>Ei kommentteja. Ole ensimmäinen kommentoija!</p>
-    }
-
-    @if (UserSession.IsLoggedIn)
-    {
-        <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
-            <div class="form-group">
-                <label for="newComment">Add a comment:</label>
-                <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
-                <ValidationMessage For="@(() => newCommentText)" />
-            </div>
-            <button class="btn btn-primary" type="submit">Post Comment</button>
-        </EditForm>
-
-        @if (commentError != null)
-        {
-            <p style="color: red;">@commentError</p>
-        }
-    }
-    else
-    {
-        <p>Kirjaudu sisään kommentoidaksesi.</p>
+        return _context.ConversationVotes
+        .Count(v => v.ConversationId == conversationId && v.IsUpVote == isUpVote);
     }
 }
-else
+
+@if (isLoading)
 {
     <p>Loading...</p>
 }
+    else if (conversation != null)
+    {
+        <div class="conversation-detail">
+            <h2>@conversation.Title</h2>
+            <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
+            <p>@conversation.Content</p>
+
+            @if (UserSession.IsLoggedIn)
+            {
+                <div class="vote-buttons">
+                    <button @onclick="() => ToggleConversationVote(conversation.Id, true)"
+                        class="vote-button @(IsConversationUpVoted(conversation.Id) ? "active upvote" : "upvote")">
+                        👍 @GetVoteCount(conversation.Id, true)
+                    </button>
+                    <button @onclick="() => ToggleConversationVote(conversation.Id, false)"
+                        class="vote-button @(IsConversationDownVoted(conversation.Id) ? "active downvote" : "downvote")">
+                        👎 @GetVoteCount(conversation.Id, false)
+                    </button>
+                </div>
+            }
+        </div>
+
+        <h4>Kommentit</h4>
+
+        @if (comments.Any())
+        {
+            <div class="comments-section">
+                @foreach (var comment in comments)
+                {
+                    <div class="comment">
+                        <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
+                        <p>@comment.Text</p>
+                        @if (UserSession.IsLoggedIn)
+                        {
+                            <div class="vote-buttons">
+                                <button @onclick="() => ToggleCommentVote(comment.Id, true)"
+                                    class="vote-button @(IsCommentUpVoted(comment.Id) ? "active upvote" : "upvote")">
+                                    👍 @GetCommentVoteCount(comment.Id, true)
+                                </button>
+                                <button @onclick="() => ToggleCommentVote(comment.Id, false)"
+                                    class="vote-button @(IsCommentDownVoted(comment.Id) ? "active downvote" : "downvote")">
+                                    👎 @GetCommentVoteCount(comment.Id, false)
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>Ei kommentteja. Ole ensimmäinen kommentoija!</p>
+        }
+
+        @if (UserSession.IsLoggedIn)
+        {
+            <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
+                <div class="form-group">
+                    <label for="newComment">Add a comment:</label>
+                    <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
+                    <ValidationMessage For="@(() => newCommentText)" />
+                </div>
+                <button class="btn btn-primary" type="submit">Post Comment</button>
+            </EditForm>
+
+            @if (commentError != null)
+            {
+                <p style="color: red;">@commentError</p>
+            }
+        }
+        else
+        {
+            <p>Kirjaudu sisään kommentoidaksesi.</p>
+        }
+    }   
+    else
+    {
+        <p>Loading...</p>
+    }
+
+
+
+    
 
 <style>
     .conversation-detail {
@@ -194,5 +385,43 @@ else
     p {
         word-wrap: break-word;
         /* Ensures long text doesn't break layout */
+    }
+
+    .vote-buttons {
+        display: flex;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    .vote-button {
+        padding: 5px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .vote-button.upvote {
+        background-color: #f0f0f0;
+        color: #28a745;
+    }
+
+    .vote-button.downvote {
+        background-color: #f0f0f0;
+        color: #dc3545;
+    }
+
+    .vote-button.active.upvote {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .vote-button.active.downvote {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .vote-button:hover {
+        background-color: #ddd;
     }
 </style>
