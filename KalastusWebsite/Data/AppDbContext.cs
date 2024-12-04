@@ -25,35 +25,83 @@ namespace KalastusWebsite.Data
         }
 
         public DbSet<Vote> Votes { get; set; }
+        public DbSet<Fish> Fishes { get; set; }
+        public DbSet<Marker> Markers { get; set; } // Add Marker DbSet
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Suhde: Conversation <-> Comments
+            // Relationships and constraints
+
+            // Relationship: Conversation <-> Comments
             modelBuilder.Entity<Conversation>()
                 .HasMany(c => c.Comments)
                 .WithOne(c => c.Conversation)
                 .HasForeignKey(c => c.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Suhde: Media <-> Votes
+            // Relationship: Media <-> Votes
             modelBuilder.Entity<Vote>()
                 .HasOne(v => v.Media)
                 .WithMany(m => m.Votes)
                 .HasForeignKey(v => v.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Yksilöllinen rajoite: Varmistaa, että yksi käyttäjä voi äänestää vain kerran per media
+            // Ensure unique votes per media by a single user
             modelBuilder.Entity<Vote>()
                 .HasIndex(v => new { v.MediaId, v.UserId })
                 .IsUnique();
 
-            // Suhde: MediaComment <-> Media
+            // Relationship: MediaComment <-> Media
             modelBuilder.Entity<MediaComment>()
                 .HasOne(mc => mc.Media)
                 .WithMany(m => m.Comments)
                 .HasForeignKey(mc => mc.MediaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Seed Fish data
+            modelBuilder.Entity<Fish>().HasData(
+                new Fish
+                {
+                    Id = 1,
+                    FinnishName = "Ahven",
+                    EnglishName = "Perch",
+                    Habitat = "Freshwater",
+                    HabitatFI = "Makea vesi",
+                    DescriptionFI = "Ahven elää järvissä, joissa on puhdasta vettä.",
+                    DescriptionEN = "Perch lives in clean freshwater lakes.",
+                    ImageUrl = "/images/ahven.jpg"
+                },
+                new Fish
+                {
+                    Id = 2,
+                    FinnishName = "Hauki",
+                    EnglishName = "Pike",
+                    Habitat = "Freshwater",
+                    HabitatFI = "Makea vesi",
+                    DescriptionFI = "Hauki on tunnettu petokala Suomessa.",
+                    DescriptionEN = "Pike is a well-known predatory fish in Finland.",
+                    ImageUrl = "/images/hauki.jpg"
+                },
+                new Fish
+                {
+                    Id = 3,
+                    FinnishName = "Siika",
+                    EnglishName = "Whitefish",
+                    Habitat = "Brackish/Sea",
+                    HabitatFI = "Murtovesi / Meri",
+                    DescriptionFI = "Siika elää Itämeressä ja joissakin järvissä.",
+                    DescriptionEN = "Whitefish lives in the Baltic Sea and some lakes.",
+                    ImageUrl = "/images/siika.jpg"
+                }
+            );
+
+            // Relationship: Marker <-> User
+            modelBuilder.Entity<Marker>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
         }

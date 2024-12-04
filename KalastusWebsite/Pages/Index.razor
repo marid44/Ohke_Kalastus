@@ -34,6 +34,7 @@
         <button class="btn-view" @onclick="NavigateToDiscussions">Katsele keskusteluja</button>
         <button class="btn-media" @onclick="NavigateToMedia">Mediat</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Selaa käyttäjien kuvia ja videoita</button>
+        <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
 
     </div>
 </div>
@@ -222,5 +223,10 @@
     private void NavigateToKartta()
     {
         NavigationManager.NavigateTo("/kartta");
+    }
+
+    private void NavigateToFishList()
+    {
+        NavigationManager.NavigateTo("/fishlist");
     }
 }

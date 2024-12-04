@@ -3,6 +3,7 @@ using System;
 using KalastusWebsite.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KalastusWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241129115150_AddFishTable")]
+    partial class AddFishTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -142,7 +145,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Ahven",
                             Habitat = "Freshwater",
                             HabitatFI = "Makea vesi",
-                            ImageUrl = "/images/ahven.jpg"
+                            ImageUrl = "wwwroot/images/ahven.jpg"
                         },
                         new
                         {
@@ -153,7 +156,7 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Hauki",
                             Habitat = "Freshwater",
                             HabitatFI = "Makea vesi",
-                            ImageUrl = "/images/hauki.jpg"
+                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/4/44/Hecht.jpg"
                         },
                         new
                         {
@@ -164,33 +167,8 @@ namespace KalastusWebsite.Migrations
                             FinnishName = "Siika",
                             Habitat = "Brackish/Sea",
                             HabitatFI = "Murtovesi / Meri",
-                            ImageUrl = "/images/siika.jpg"
+                            ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Coregonus_lavaretus.jpg"
                         });
-                });
-
-            modelBuilder.Entity("KalastusWebsite.Models.Marker", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<double>("Latitude")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("MarkerName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Markers");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.Media", b =>
@@ -335,17 +313,6 @@ namespace KalastusWebsite.Migrations
                         .IsRequired();
 
                     b.Navigation("Conversation");
-                });
-
-            modelBuilder.Entity("KalastusWebsite.Models.Marker", b =>
-                {
-                    b.HasOne("KalastusWebsite.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("KalastusWebsite.Models.MediaComment", b =>

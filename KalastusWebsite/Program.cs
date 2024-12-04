@@ -16,9 +16,21 @@ builder.Services.AddServerSideBlazor()
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=app.db"));
-builder.Services.AddSingleton<UserSession>();
+
+// Use Scoped for user-specific services
+builder.Services.AddScoped<UserSession>();
+
+builder.Services.AddHttpClient();
+
+builder.Services.AddHttpClient("API", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5129/");
+});
+
+// Add controllers for APIs
+builder.Services.AddControllers().AddNewtonsoftJson();
+
 builder.Services.AddSingleton<EventService>();
-builder.Services.AddScoped<KalastusWebsite.Services.UserSession>();
 
 // Configure Kestrel to allow large file uploads
 builder.WebHost.ConfigureKestrel(options =>
@@ -37,8 +49,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
 
+app.MapControllers(); // Map API controllers here, after middleware is set up
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

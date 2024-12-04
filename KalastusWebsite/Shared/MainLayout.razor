@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject Services.UserSession UserSession
+@inject IJSRuntime JSRuntime
 
 <PageTitle>KalastusWebsite</PageTitle>
 
@@ -12,7 +13,6 @@
             {
                 <button class="btn btn-link" @onclick="Logout">Kirjaudu ulos</button>
                 <button class="btn btn-link" @onclick="NavigateToProfile">Profiili</button>
-                
             }
             @if (!UserSession.IsLoggedIn)
             {
@@ -31,8 +31,6 @@
     </div>
 </div>
 
-
-
 @code {
     [Inject] private NavigationManager NavigationManager { get; set; }
 
@@ -42,12 +40,18 @@
         NavigationManager.NavigateTo("/");
     }
 
-    private void Logout()
+    private async Task Logout()
     {
         // Clear the user session
         UserSession.Username = string.Empty;
+        UserSession.UserId = 0; // Reset UserId
         UserSession.IsLoggedIn = false;
 
+        // Clear the map and marker count using JavaScript
+        await JSRuntime.InvokeVoidAsync("clearMap");
+        await JSRuntime.InvokeVoidAsync("resetMarkerCount");
+
+        // Redirect to the home page
         NavigationManager.NavigateTo("/", forceLoad: true);
     }
 
