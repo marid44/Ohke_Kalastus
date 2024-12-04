@@ -8,32 +8,35 @@
 @using Microsoft.EntityFrameworkCore
 
 <h3>Luo keskustelu</h3>
+<link href="css/lisääkeskustelu.css" rel="stylesheet">
 
-@if (UserSession.IsLoggedIn)
-{
-    <EditForm Model="newConversation" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<div class="form-container">
+    @if (UserSession.IsLoggedIn)
+    {
+        <EditForm Model="newConversation" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
 
-        <div class="form-group">
-            <label for="title">Title:</label>
-            <InputText id="title" @bind-Value="newConversation.Title" class="form-control" />
-            <ValidationMessage For="@(() => newConversation.Title)" />
-        </div>
+            <div class="form-group">
+                <label for="title">Otsikko:</label>
+                <InputText id="title" @bind-Value="newConversation.Title" class="form-control" />
+                <ValidationMessage For="@(() => newConversation.Title)" class="validation-message" />
+            </div>
 
-        <div class="form-group">
-            <label for="content">Content:</label>
-            <InputTextArea id="content" @bind-Value="newConversation.Content" class="form-control" />
-            <ValidationMessage For="@(() => newConversation.Content)" />
-        </div>
+            <div class="form-group">
+                <label for="content">Sisältö:</label>
+                <InputTextArea id="content" @bind-Value="newConversation.Content" class="form-control" />
+                <ValidationMessage For="@(() => newConversation.Content)" class="validation-message" />
+            </div>
 
-        <button type="submit" class="btn btn-primary">Post Conversation</button>
-    </EditForm>
-}
-else
-{
-    <p>You need to log in to add a new conversation.</p>
-}
+            <button type="submit" class="btn btn-primary">Lähetä keskustelu</button>
+        </EditForm>
+    }
+    else
+    {
+        <p>You need to log in to add a new conversation.</p>
+    }
+</div>
 
 @code {
     private Conversation newConversation = new Conversation();

@@ -7,6 +7,8 @@
 @using Microsoft.EntityFrameworkCore
 
 <h3>Kaikki Keskustelut</h3>
+<link href="css/kaikkikeskustelut.css" rel="stylesheet">
+
 
 @if (conversations != null && conversations.Any())
 {
@@ -42,33 +44,3 @@ else
         NavigationManager.NavigateTo($"/conversation/{conversationId}");
     }
 }
-
-<style>
-    .conversation-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .conversation-box {
-        padding: 15px;
-        background-color: #f1f1f1;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .conversation-box:hover {
-        background-color: #e0e0e0;
-    }
-
-    .conversation-box h4 {
-        margin: 0;
-    }
-
-    .conversation-box p {
-        margin: 5px 0;
-        color: #666;
-    }
-</style>

@@ -1,0 +1,49 @@
+/* Keskustelulistan asettelu */
+.conversation-list {
+    display: flex;
+    flex-direction: column; /* Järjestää elementit pystysuunnassa */
+    gap: 15px; /* Etäisyys keskusteluiden välillä */
+    padding: 20px; /* Reunukset keskustelulistan ympärillä */
+    max-width: 800px; /* Maksimileveys keskusteluille */
+    margin: 20px auto; /* Keskittää listan vaakasuunnassa */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Kevyt varjo taustan korostamiseksi */
+}
+
+/* Yksittäinen keskustelukortti */
+.conversation-box {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+/* Hover-efekti keskustelukortille */
+.conversation-box:hover {
+    background-color: #e8f4ff;
+    transform: translateY(-2px); /* Nostaa korttia hieman ylöspäin */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Korostaa hover-efektiä varjolla */
+}
+
+/* Keskustelukortin otsikko */
+.conversation-box h4 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #333;
+}
+
+/* Keskustelukortin teksti */
+.conversation-box p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Aikaleiman tyyli */
+.conversation-box p small {
+    color: #888;
+    font-size: 12px;
+}
