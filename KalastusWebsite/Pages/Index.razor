@@ -27,20 +27,18 @@
     
 
     <div class="left-section">
-        <div class="welcome-message">
-            @if (UserSession.IsLoggedIn)
-            {
-                <h2>Terve, @UserSession.Username!</h2>
-            }
-            else
-            {
-                <h2>Tervetuloa!</h2>
-            }
-        </div>
         <div class="side-buttons">
-            <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
-            <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
-            <button class="btn-tapahtumat" @onclick="NavigateToEvents">Tapahtumat</button>
+            <!-- Kartta-nappi taustakuvalla -->
+            <button class="btn-kartta" @onclick="NavigateToKartta">
+                <span>Kartta</span>
+            </button>
+            <button class="btn-kalalajit" @onclick="NavigateToFishList">
+                <span>Kalalajit</span>
+            </button>
+             <!-- Tapahtumat-nappi taustakuvalla -->
+            <button class="btn-tapahtumat" @onclick="NavigateToEvents">
+                <span>Tapahtumat</span>
+            </button>
         </div>
     </div>
 
