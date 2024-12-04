@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace KalastusWebsite.Migrations
 {
     /// <inheritdoc />
-    public partial class AddEventsTable : Migration
+    public partial class UpdatedMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
