@@ -25,8 +25,17 @@
 
 <div class="main-container">
     
-
     <div class="left-section">
+         <div class="welcome-message">
+            @if (UserSession.IsLoggedIn)
+            {
+                <h2>Terve, @UserSession.Username!</h2>
+            }
+            else
+            {
+                <h2>Tervetuloa!</h2>
+            }
+        </div>
         <div class="side-buttons">
             <!-- Kartta-nappi taustakuvalla -->
             <button class="btn-kartta" @onclick="NavigateToKartta">
