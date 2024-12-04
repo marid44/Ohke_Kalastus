@@ -108,21 +108,30 @@
 <div class="main-layout">
     <!-- Tulevat tapahtumat -->
     <div class="content-section">
-        <h3>Tulevat tapahtumat</h3>
-        @if (upcomingEvents != null && upcomingEvents.Any())
-        {
-            <div class="event-box">
-                <h4>@upcomingEvents[currentEventIndex].Title</h4>
-                <p class="event-date">@upcomingEvents[currentEventIndex].Date.ToString("dd.MM.yyyy")</p>
-                <p class="event-desc">@upcomingEvents[currentEventIndex].Description</p>
-                <small>Järjestäjä: @upcomingEvents[currentEventIndex].CreatedBy</small>
+    <h3>Tulevat tapahtumat</h3>
+    @if (upcomingEvents != null && upcomingEvents.Any())
+    {
+        <div class="event-box">
+            <h4>@upcomingEvents[currentEventIndex].Title</h4>
+            <p class="event-date">@upcomingEvents[currentEventIndex].Date.ToString("dd.MM.yyyy")</p>
+            <p class="event-desc">@upcomingEvents[currentEventIndex].Description</p>
+            <small>Järjestäjä: @upcomingEvents[currentEventIndex].CreatedBy</small>
+            
+            <div class="carousel-indicators">
+                @for (int i = 0; i < upcomingEvents.Count; i++)
+                {
+                    var index = i;
+                    <span class="indicator @(index == currentEventIndex ? "active" : "")"
+                          @onclick="() => SetCurrentEvent(index)"></span>
+                }
             </div>
-        }
-        else
-        {
-            <p>Ei tulevia tapahtumia seuraavan 90 päivän aikana.</p>
-        }
-    </div>
+        </div>
+    }
+    else
+    {
+        <p>Ei tulevia tapahtumia seuraavan 90 päivän aikana.</p>
+    }
+</div>
 
     <!-- Suosituimmat kuvat -->
     <div class="content-section">
