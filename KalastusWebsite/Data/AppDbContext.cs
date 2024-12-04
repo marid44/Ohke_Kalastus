@@ -27,7 +27,7 @@ namespace KalastusWebsite.Data
             optionsBuilder.UseSqlite("Data Source=app.db");
         }
 
-        public DbSet<Vote> Votes { get; set; }
+        public DbSet<MediaVote> MediaVotes { get; set; }
         public DbSet<Fish> Fishes { get; set; }
         public DbSet<Marker> Markers { get; set; } // Add Marker DbSet
 
@@ -45,14 +45,14 @@ namespace KalastusWebsite.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Relationship: Media <-> Votes
-            modelBuilder.Entity<Vote>()
+            modelBuilder.Entity<MediaVote>()
                 .HasOne(v => v.Media)
                 .WithMany(m => m.Votes)
                 .HasForeignKey(v => v.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Ensure unique votes per media by a single user
-            modelBuilder.Entity<Vote>()
+            modelBuilder.Entity<MediaVote>()
                 .HasIndex(v => new { v.MediaId, v.UserId })
                 .IsUnique();
 

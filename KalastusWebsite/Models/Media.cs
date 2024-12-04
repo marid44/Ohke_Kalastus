@@ -11,8 +11,7 @@ namespace KalastusWebsite.Models
         public DateTime UploadedAt { get; set; } = DateTime.Now;
         public string UploadedBy { get; set; }
         public List<MediaComment> Comments { get; set; } = new();
-        public ICollection<Vote> Votes { get; set; } = new List<Vote>();
-
+        public ICollection<MediaVote> Votes { get; set; } = new List<MediaVote>();  // Updated this line
     }
 
     // Add the MediaUploadModel class here

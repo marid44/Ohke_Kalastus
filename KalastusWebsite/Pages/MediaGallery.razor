@@ -5,6 +5,8 @@
 @inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject KalastusWebsite.Services.UserSession UserSession
+
 
 <h1>Selaa käyttäjien kuvia ja videoita</h1>
 
@@ -33,16 +35,19 @@
                     <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
                 </p>
 
-                <div class="vote-buttons">
-                    <button @onclick="() => ToggleVote(media.Id, true)"
-                        class="vote-button @(IsUpVote(media.Id) ? "active upvote" : "upvote")">
-                        👍 @GetVoteCount(media.Id, true)
-                    </button>
-                    <button @onclick="() => ToggleVote(media.Id, false)"
-                        class="vote-button @(IsDownVote(media.Id) ? "active downvote" : "downvote")">
-                        👎 @GetVoteCount(media.Id, false)
-                    </button>
-                </div>
+                @if (UserSession.IsLoggedIn)
+                {
+                    <div class="vote-buttons">
+                        <button @onclick="() => ToggleVote(media.Id, true)"
+                            class="vote-button @(IsUpVote(media.Id) ? "active upvote" : "upvote")">
+                            👍 @GetVoteCount(media.Id, true)
+                        </button>
+                        <button @onclick="() => ToggleVote(media.Id, false)"
+                            class="vote-button @(IsDownVote(media.Id) ? "active downvote" : "downvote")">
+                            👎 @GetVoteCount(media.Id, false)
+                        </button>
+                    </div>
+                }
             </div>
         }
     </div>
@@ -173,37 +178,45 @@ else
 @code {
     private List<Media> mediaFiles = new();
     private Dictionary<int, bool?> userVotes = new();
-    private string currentUserId;
     private bool isVoting = false;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        currentUserId = await GetCurrentUserIdAsync();
         await LoadMediaFilesAsync();
-        await LoadUserVotesAsync();
     }
 
-    private async Task<string> GetCurrentUserIdAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        if (firstRender)
+        {
+            if (!UserSession.IsLoaded)
+            {
+                await UserSession.LoadSession();
+            }
 
-        return user.Identity?.IsAuthenticated == true
-        ? user.FindFirst(c => c.Type == "sub")?.Value ?? Guid.NewGuid().ToString()
-        : Guid.NewGuid().ToString();
+            if (UserSession.IsLoggedIn)
+            {
+                await LoadUserVotesAsync();
+            }
+
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadMediaFilesAsync()
     {
         mediaFiles = await DbContext.MediaFiles
         .Include(m => m.Votes)
+        .OrderByDescending(m => m.UploadedAt)
         .ToListAsync();
     }
 
     private async Task LoadUserVotesAsync()
     {
-        var votes = await DbContext.Votes
-        .Where(v => v.UserId == currentUserId)
+        var votes = await DbContext.MediaVotes
+        .Where(v => v.UserId == UserSession.UserId.ToString())
         .ToListAsync();
 
         userVotes = votes.ToDictionary(v => v.MediaId, v => (bool?)v.IsUpVote);
@@ -211,49 +224,44 @@ else
 
     private async Task ToggleVote(int mediaId, bool isUpVote)
     {
-        if (isVoting) return; // Estä useat peräkkäiset äänestykset
+        if (!UserSession.IsLoggedIn || isVoting) return;
         isVoting = true;
 
         try
         {
-            var existingVote = await DbContext.Votes
-            .FirstOrDefaultAsync(v => v.MediaId == mediaId && v.UserId == currentUserId);
+            var existingVote = await DbContext.MediaVotes
+            .FirstOrDefaultAsync(v => v.MediaId == mediaId &&
+            v.UserId == UserSession.UserId.ToString());
 
             if (existingVote != null)
             {
                 if (existingVote.IsUpVote == isUpVote)
                 {
-                    // Poista ääni, jos se on samanlainen
-                    DbContext.Votes.Remove(existingVote);
+                    DbContext.MediaVotes.Remove(existingVote);
                     userVotes[mediaId] = null;
                 }
                 else
                 {
-                    // Päivitä ääni vastakkaiseksi
                     existingVote.IsUpVote = isUpVote;
-                    DbContext.Votes.Update(existingVote);
+                    DbContext.MediaVotes.Update(existingVote);
                     userVotes[mediaId] = isUpVote;
                 }
             }
             else
             {
-                // Lisää uusi ääni
-                var newVote = new Vote
+                var newVote = new MediaVote
                     {
                         MediaId = mediaId,
-                        UserId = currentUserId,
+                        UserId = UserSession.UserId.ToString(),
                         IsUpVote = isUpVote
                     };
-                DbContext.Votes.Add(newVote);
+                DbContext.MediaVotes.Add(newVote);
                 userVotes[mediaId] = isUpVote;
             }
 
             await DbContext.SaveChangesAsync();
+            await LoadMediaFilesAsync();
             StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Virhe äänestäessä: {ex.Message}");
         }
         finally
         {
