@@ -41,8 +41,10 @@
     </div>
 
     <div class="latest-conversations">
-        <h3>Uusimmat Keskustelut</h3>
-        <div class="conversation-container">
+    <div class="conversations-container">
+        <!-- Left column -->
+        <div class="conversations-section">
+            <h3>Uusimmat Keskustelut</h3>
             <div class="conversation-list">
                 @if (latestConversations != null && latestConversations.Any())
                 {
@@ -50,10 +52,8 @@
                     {
                         <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
                             <h4>@conversation.Title</h4>
-                            <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
-                            </p>
-                            <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." :
-                                    conversation.Content)</p>
+                            <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
+                            <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." : conversation.Content)</p>
                         </div>
                     }
                 }
@@ -62,10 +62,34 @@
                     <p>Ei keskusteluja saatavilla.</p>
                 }
             </div>
-            <div class="conversation-buttons">
-                <button class="btn-new" @onclick="NavigateToCreateDiscussion">+ Uusi keskustelu</button>
-                <button class="btn-all" @onclick="NavigateToDiscussions">Kaikki keskustelut</button>
+        </div>
+
+        <!-- Right column -->
+        <div class="conversations-section">
+            <h3>Suosituimmat Keskustelut</h3>
+            <div class="conversation-list">
+                @if (popularConversations != null && popularConversations.Any())
+                {
+                    @foreach (var conversation in popularConversations)
+                    {
+                        <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
+                            <h4>@conversation.Title</h4>
+                            <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
+                            <p>👍 @conversation.VoteCount ääntä</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Ei suosittuja keskusteluja.</p>
+                }
             </div>
+        </div>
+    </div>
+
+        <div class="conversation-buttons">
+            <button class="btn-new" @onclick="NavigateToCreateDiscussion">+ Uusi keskustelu</button>
+            <button class="btn-all" @onclick="NavigateToDiscussions">Kaikki keskustelut</button>
         </div>
     </div>
 </div>
@@ -76,7 +100,7 @@
     <div class="media-carousel">
         <button @onclick="MoveBackward" class="carousel-arrow left-arrow">⬅</button>
         <div class="media-items">
-            @if (recentMediaFiles != null && recentMediaFiles.Any())
+            @if (recentMediaFiles?.Any() ?? false)
             {
                 @foreach (var media in visibleMediaFiles)
                 {
@@ -101,7 +125,6 @@
         <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
     </div>
 
-    <!-- Action buttons for media -->
     <div class="media-buttons">
         <button class="btn-media" @onclick="NavigateToMedia">+ Lisää mediaa</button>
         <button class="btn-gallery" @onclick="NavigateToMediaGallery">Kaikki kuvat</button>
@@ -112,6 +135,13 @@
 
 @code {
     private List<Conversation> latestConversations;
+    private List<ConversationWithVotes> popularConversations;
+
+    private class ConversationWithVotes : Conversation
+    {
+        public int VoteCount { get; set; }
+    }
+
 
     private List<Media> recentMediaFiles;
     private List<Media> visibleMediaFiles = new(); // Tracks three currently visible images
@@ -123,25 +153,34 @@
     {
         try
         {
-            // Try to load session with timeout
-            var timeoutTask = Task.Delay(2000); // nosta millisekunti lukua jos tulee erroria sivun latauksesta
-            var loadingTask = WaitForSession();
-            
-            var completedTask = await Task.WhenAny(timeoutTask, loadingTask);
-            if (completedTask == timeoutTask)
-            {
-                errorMessage = "Sivun lataus epäonnistui. Yritä päivittää sivu.";
-                return;
-            }
+            await WaitForSession();
 
-            // Fetch data
-            recentMediaFiles = await _context.MediaFiles
-                .OrderByDescending(m => m.UploadedAt)
+            // Fetch latest conversations
+            latestConversations = await _context.Conversations
+                .OrderByDescending(c => c.CreatedAt)
                 .Take(5)
                 .ToListAsync();
 
-            latestConversations = await _context.Conversations
-                .OrderByDescending(c => c.CreatedAt)
+            recentMediaFiles = await _context.MediaFiles
+            .OrderByDescending(m => m.UploadedAt)
+            .Take(5)
+            .ToListAsync();
+
+            // Fetch popular conversations
+            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+            popularConversations = await _context.Conversations
+                .Where(c => c.CreatedAt >= thirtyDaysAgo)
+                .Select(c => new ConversationWithVotes
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Content = c.Content,
+                    Username = c.Username,
+                    CreatedAt = c.CreatedAt,
+                    VoteCount = _context.ConversationVotes
+                        .Count(v => v.ConversationId == c.Id && v.IsUpVote)
+                })
+                .OrderByDescending(c => c.VoteCount)
                 .Take(5)
                 .ToListAsync();
 
@@ -367,8 +406,8 @@
 
     .main-container {
         display: flex;
-        gap: 20px; /* Space between the left section and latest conversations */
-        align-items: flex-start; /* Top alignment */
+        gap: 10px; /* Reduced gap */
+        align-items: flex-start;
     }
 
 
@@ -387,14 +426,18 @@
         /* Center the container horizontally */
     }
 
+    .left-section {
+        flex: 0 0 auto; /* Don't grow, don't shrink, auto basis */
+    }
+
     .side-buttons {
         display: flex;
         flex-direction: column;
-        gap: 20px; /* Spacing between buttons */
-        flex-shrink: 0; /* Prevents the buttons from shrinking */
-        padding-right: 20px; /* Adds padding to the right of the buttons */
-        margin-right: 40px; /* Increased margin to create more space between buttons and conversations */
-        margin-left: 40px
+        gap: 20px;
+        flex-shrink: 0;
+        padding-right: 20px;
+        margin-right: 20px; /* Reduced from 40px */
+        margin-left: 40px;
     }
 
     .side-buttons button {
@@ -437,151 +480,140 @@
     }
 
     .latest-conversations {
-        flex: 1; /* Allows the conversation section to take up the remaining space */
+        flex: 1.5; /* Takes more space horizontally */
         padding: 20px;
         background-color: #f9f9f9;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .latest-conversations h3 {
-        font-size: 1.5em;
-        margin-bottom: 15px;
-        text-align: center;
-        /* Centers the heading text */
-    }
-
-    .conversation-container {
+    .conversations-container {
         display: flex;
+        gap: 20px;
         width: 100%;
-        align-items: flex-start;
-        /* Aligns content at the top */
+        margin-bottom: 20px;
     }
 
-    .conversation-list {
+    .conversations-section {
         flex: 1;
+        min-width: 0;
+        padding: 15px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        height: 300px; /* Reduced from 600px to show ~2 conversations */
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        max-height: 260px;
+    }
+
+    .conversations-section h3 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        text-align: center;
+        color: #333;
+    }
+
+    /* Scrollable conversation list */
+    .conversation-list {
+        max-height: 500px;
         overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #c4c4c4 #f1f1f1;
         padding-right: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
     }
 
     .conversation-list::-webkit-scrollbar {
-        width: 8px;
-        /* Width of the scrollbar */
-    }
-
-    .conversation-list::-webkit-scrollbar-thumb {
-        background: #c4c4c4;
-        /* Color of the scrollbar thumb */
-        border-radius: 4px;
-        /* Rounded corners for the scrollbar thumb */
+        width: 6px;
     }
 
     .conversation-list::-webkit-scrollbar-track {
         background: #f1f1f1;
-        /* Color of the scrollbar track */
+        border-radius: 3px;
     }
 
-    .conversation-box {
-        width: 100%;
-        /* Ensures the box fits inside the container */
-        padding: 20px;
-        /* Increased padding for a balanced look */
-        background-color: #f1f1f1;
-        border: 1px solid #ddd;
+    .conversation-list::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .conversation-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Conversation boxes */
+        .conversation-box {
+        margin-bottom: 10px; /* Reduced margin */
+        padding: 12px; /* Slightly reduced padding */
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
         border-radius: 8px;
         cursor: pointer;
-        transition: background-color 0.2s;
-        overflow: hidden;
-        /* Prevents any overflowing content */
-        text-overflow: ellipsis;
-        /* Adds ellipsis for long text */
-        white-space: nowrap;
-        /* Keeps text on a single line (remove if multi-line ellipsis is needed) */
-        min-height: 120px;
-        /* Ensures a consistent height for all boxes */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        /* Distributes content vertically */
+        transition: transform 0.2s ease;
     }
 
     .conversation-box:hover {
-        background-color: #e0e0e0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .conversations-section h3 {
+        margin-bottom: 10px; /* Reduced margin */
+        font-size: 1.2em;
     }
 
     .conversation-box h4 {
         margin: 0 0 10px 0;
-        overflow: hidden;
-        /* Prevents overflow in the title */
-        text-overflow: ellipsis;
-        /* Adds ellipsis for long titles */
-        white-space: nowrap;
-        /* Keeps title on one line */
         font-size: 1.1em;
-        /* Adjusted font size for emphasis */
-        font-weight: bold;
+        color: #2c3e50;
     }
 
     .conversation-box p {
         margin: 5px 0;
         color: #666;
-        overflow: hidden;
-        /* Prevents overflow in the text content */
-        text-overflow: ellipsis;
-        /* Adds ellipsis for long content */
-        white-space: nowrap;
-        /* Keeps content on one line (remove if multi-line ellipsis is needed) */
         font-size: 0.9em;
-        /* Slightly smaller font for descriptive text */
+        line-height: 1.4;
     }
 
     .conversation-box small {
         color: #999;
         font-size: 0.8em;
-        /* Smaller font for metadata (e.g., username and date) */
     }
 
+    /* Action buttons */
     .conversation-buttons {
         display: flex;
-        flex-direction: column;
-        /* Stack buttons vertically */
-        gap: 10px;
-        margin-left: 15px;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
     }
 
     .conversation-buttons button {
-        padding: 10px 15px;
+        padding: 10px 20px;
         font-size: 0.9em;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
+        transition: all 0.2s ease;
     }
 
     .conversation-buttons .btn-new {
         background-color: #28a745;
-        /* Green */
         color: white;
     }
 
     .conversation-buttons .btn-new:hover {
         background-color: #218838;
+        transform: translateY(-2px);
     }
 
     .conversation-buttons .btn-all {
         background-color: #007bff;
-        /* Blue */
         color: white;
     }
 
     .conversation-buttons .btn-all:hover {
         background-color: #0056b3;
+        transform: translateY(-2px);
     }
 
 
