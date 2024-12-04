@@ -16,6 +16,10 @@
     private string newCommentText = string.Empty;
     private string? commentError;
 
+    private Dictionary<int, bool?> conversationVotes = new();
+    private Dictionary<int, bool?> commentVotes = new();
+    private bool isVoting = false;
+
     protected override async Task OnInitializedAsync()
     {
         // Fetch the conversation and associated comments
@@ -32,6 +36,71 @@
         {
             // Redirect if conversation is not found
             NavigationManager.NavigateTo("/conversations");
+        }
+
+        await base.OnInitializedAsync();
+        await LoadVotesAsync();
+    }
+
+    private async Task LoadVotesAsync()
+    {
+        if (!UserSession.IsLoggedIn) return;
+
+        var convVotes = await _context.ConversationVotes
+        .Where(v => v.UserId == UserSession.UserId.ToString())
+        .ToListAsync();
+
+        var comVotes = await _context.CommentVotes
+        .Where(v => v.UserId == UserSession.UserId.ToString())
+        .ToListAsync();
+
+        conversationVotes = convVotes.ToDictionary(v => v.ConversationId, v => (bool?)v.IsUpVote);
+        commentVotes = comVotes.ToDictionary(v => v.CommentId, v => (bool?)v.IsUpVote);
+    }
+
+    private async Task ToggleConversationVote(int conversationId, bool isUpVote)
+    {
+        if (!UserSession.IsLoggedIn || isVoting) return;
+        isVoting = true;
+
+        try
+        {
+            var vote = await _context.ConversationVotes
+            .FirstOrDefaultAsync(v => v.ConversationId == conversationId &&
+            v.UserId == UserSession.UserId.ToString());
+
+            if (vote != null)
+            {
+                if (vote.IsUpVote == isUpVote)
+                {
+                    _context.ConversationVotes.Remove(vote);
+                    conversationVotes[conversationId] = null;
+                }
+                else
+                {
+                    vote.IsUpVote = isUpVote;
+                    _context.ConversationVotes.Update(vote);
+                    conversationVotes[conversationId] = isUpVote;
+                }
+            }
+            else
+            {
+                var newVote = new ConversationVote
+                    {
+                        ConversationId = conversationId,
+                        UserId = UserSession.UserId.ToString(),
+                        IsUpVote = isUpVote
+                    };
+                _context.ConversationVotes.Add(newVote);
+                conversationVotes[conversationId] = isUpVote;
+            }
+
+            await _context.SaveChangesAsync();
+            StateHasChanged();
+        }
+        finally
+        {
+            isVoting = false;
         }
     }
 
@@ -61,6 +130,18 @@
         commentError = null;
         comments.Add(newComment);
     }
+
+    private bool IsConversationUpVoted(int id) =>
+    conversationVotes.TryGetValue(id, out var vote) && vote == true;
+
+    private bool IsConversationDownVoted(int id) =>
+    conversationVotes.TryGetValue(id, out var vote) && vote == false;
+
+    private int GetVoteCount(int conversationId, bool isUpVote)
+    {
+        return _context.ConversationVotes
+        .Count(v => v.ConversationId == conversationId && v.IsUpVote == isUpVote);
+    }
 }
 
 @if (conversation != null)
@@ -69,6 +150,20 @@
         <h2>@conversation.Title</h2>
         <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
         <p>@conversation.Content</p>
+
+        @if (UserSession.IsLoggedIn)
+        {
+            <div class="vote-buttons">
+                <button @onclick="() => ToggleConversationVote(conversation.Id, true)"
+                    class="vote-button @(IsConversationUpVoted(conversation.Id) ? "active upvote" : "upvote")">
+                    👍 @GetVoteCount(conversation.Id, true)
+                </button>
+                <button @onclick="() => ToggleConversationVote(conversation.Id, false)"
+                    class="vote-button @(IsConversationDownVoted(conversation.Id) ? "active downvote" : "downvote")">
+                    👎 @GetVoteCount(conversation.Id, false)
+                </button>
+            </div>
+        }
     </div>
 
     <h4>Kommentit</h4>
@@ -194,5 +289,43 @@ else
     p {
         word-wrap: break-word;
         /* Ensures long text doesn't break layout */
+    }
+
+    .vote-buttons {
+        display: flex;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    .vote-button {
+        padding: 5px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .vote-button.upvote {
+        background-color: #f0f0f0;
+        color: #28a745;
+    }
+
+    .vote-button.downvote {
+        background-color: #f0f0f0;
+        color: #dc3545;
+    }
+
+    .vote-button.active.upvote {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .vote-button.active.downvote {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .vote-button:hover {
+        background-color: #ddd;
     }
 </style>

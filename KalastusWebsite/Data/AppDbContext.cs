@@ -19,6 +19,9 @@ namespace KalastusWebsite.Data
 
         public DbSet<Event> Events { get; set; }
 
+        public DbSet<ConversationVote> ConversationVotes { get; set; }
+        public DbSet<CommentVote> CommentVotes { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite("Data Source=app.db");
@@ -59,6 +62,14 @@ namespace KalastusWebsite.Data
                 .WithMany(m => m.Comments)
                 .HasForeignKey(mc => mc.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ConversationVote>()
+                .HasIndex(v => new { v.ConversationId, v.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<CommentVote>()
+                .HasIndex(v => new { v.CommentId, v.UserId })
+                .IsUnique();
 
             // Seed Fish data
             modelBuilder.Entity<Fish>().HasData(
