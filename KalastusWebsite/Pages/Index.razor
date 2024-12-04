@@ -37,6 +37,7 @@
         <div class="side-buttons">
             <button class="btn-primary" @onclick="NavigateToKartta">Kartta</button>
             <button class="btn-profile" @onclick="NavigateToFishList">Kalalajit</button>
+            <button class="btn-tapahtumat" @onclick="NavigateToEvents">Tapahtumat</button>
         </div>
     </div>
 
@@ -288,6 +289,10 @@
     private void NavigateToFishList()
     {
         NavigationManager.NavigateTo("/fishlist");
+    }
+    private void NavigateToEvents()
+    {
+        NavigationManager.NavigateTo("/events");
     }
 }
 
@@ -742,5 +747,11 @@
 
     .btn-gallery:hover {
         background-color: #0056b3;
+    }
+
+    .btn-tapahtumat {
+        background-color: #007bff;
+        /* Blue for browse */
+        color: white;
     }
 </style>
