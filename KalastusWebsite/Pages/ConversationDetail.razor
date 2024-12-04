@@ -11,6 +11,8 @@
     [Parameter]
     public int Id { get; set; } // This will receive the conversation ID from the URL
 
+    private bool isLoading = true;
+
     private Conversation? conversation;
     private List<Comment> comments = new List<Comment>();
     private string newCommentText = string.Empty;
@@ -22,7 +24,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the conversation and associated comments
+        isLoading = true;
+
+        // Fetch the conversation and associated comments first
         conversation = await _context.Conversations.FindAsync(Id);
 
         if (conversation != null)
@@ -34,12 +38,25 @@
         }
         else
         {
-            // Redirect if conversation is not found
             NavigationManager.NavigateTo("/conversations");
+            return;
         }
+    }
 
-        await base.OnInitializedAsync();
-        await LoadVotesAsync();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Move session loading to after first render
+            if (!UserSession.IsLoaded)
+            {
+                await UserSession.LoadSession();
+            }
+
+            await LoadVotesAsync();
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadVotesAsync()
@@ -144,72 +161,80 @@
     }
 }
 
-@if (conversation != null)
-{
-    <div class="conversation-detail">
-        <h2>@conversation.Title</h2>
-        <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
-        <p>@conversation.Content</p>
-
-        @if (UserSession.IsLoggedIn)
-        {
-            <div class="vote-buttons">
-                <button @onclick="() => ToggleConversationVote(conversation.Id, true)"
-                    class="vote-button @(IsConversationUpVoted(conversation.Id) ? "active upvote" : "upvote")">
-                    👍 @GetVoteCount(conversation.Id, true)
-                </button>
-                <button @onclick="() => ToggleConversationVote(conversation.Id, false)"
-                    class="vote-button @(IsConversationDownVoted(conversation.Id) ? "active downvote" : "downvote")">
-                    👎 @GetVoteCount(conversation.Id, false)
-                </button>
-            </div>
-        }
-    </div>
-
-    <h4>Kommentit</h4>
-
-    @if (comments.Any())
-    {
-        <div class="comments-section">
-            @foreach (var comment in comments)
-            {
-                <div class="comment">
-                    <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
-                    <p>@comment.Text</p>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>Ei kommentteja. Ole ensimmäinen kommentoija!</p>
-    }
-
-    @if (UserSession.IsLoggedIn)
-    {
-        <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
-            <div class="form-group">
-                <label for="newComment">Add a comment:</label>
-                <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
-                <ValidationMessage For="@(() => newCommentText)" />
-            </div>
-            <button class="btn btn-primary" type="submit">Post Comment</button>
-        </EditForm>
-
-        @if (commentError != null)
-        {
-            <p style="color: red;">@commentError</p>
-        }
-    }
-    else
-    {
-        <p>Kirjaudu sisään kommentoidaksesi.</p>
-    }
-}
-else
+@if (isLoading)
 {
     <p>Loading...</p>
 }
+    else if (conversation != null)
+    {
+        <div class="conversation-detail">
+            <h2>@conversation.Title</h2>
+            <p><small>Posted by @conversation.Username on @conversation.CreatedAt</small></p>
+            <p>@conversation.Content</p>
+
+            @if (UserSession.IsLoggedIn)
+            {
+                <div class="vote-buttons">
+                    <button @onclick="() => ToggleConversationVote(conversation.Id, true)"
+                        class="vote-button @(IsConversationUpVoted(conversation.Id) ? "active upvote" : "upvote")">
+                        👍 @GetVoteCount(conversation.Id, true)
+                    </button>
+                    <button @onclick="() => ToggleConversationVote(conversation.Id, false)"
+                        class="vote-button @(IsConversationDownVoted(conversation.Id) ? "active downvote" : "downvote")">
+                        👎 @GetVoteCount(conversation.Id, false)
+                    </button>
+                </div>
+            }
+        </div>
+
+        <h4>Kommentit</h4>
+
+        @if (comments.Any())
+        {
+            <div class="comments-section">
+                @foreach (var comment in comments)
+                {
+                    <div class="comment">
+                        <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
+                        <p>@comment.Text</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>Ei kommentteja. Ole ensimmäinen kommentoija!</p>
+        }
+
+        @if (UserSession.IsLoggedIn)
+        {
+            <EditForm Model="@this" OnValidSubmit="AddComment"> <!-- Ensure Model or EditContext is set -->
+                <div class="form-group">
+                    <label for="newComment">Add a comment:</label>
+                    <InputTextArea id="newComment" class="form-control" @bind-Value="newCommentText" />
+                    <ValidationMessage For="@(() => newCommentText)" />
+                </div>
+                <button class="btn btn-primary" type="submit">Post Comment</button>
+            </EditForm>
+
+            @if (commentError != null)
+            {
+                <p style="color: red;">@commentError</p>
+            }
+        }
+        else
+        {
+            <p>Kirjaudu sisään kommentoidaksesi.</p>
+        }
+    }   
+    else
+    {
+        <p>Loading...</p>
+    }
+}
+
+
+    
 
 <style>
     .conversation-detail {
