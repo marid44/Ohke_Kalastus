@@ -15,14 +15,15 @@ builder.Services.AddServerSideBlazor()
         options.MaximumReceiveMessageSize = 1024 * 1024 * 1024; // 1 GB
     });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=app.db"));
+// Single DbContext configuration
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite("Data Source=app.db")); // Keep your existing connection string
 
 // Use Scoped for user-specific services
 builder.Services.AddScoped<UserSession>();
+builder.Services.AddScoped<EventService>();
 
 builder.Services.AddHttpClient();
-
 builder.Services.AddHttpClient("API", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5129/");
@@ -34,15 +35,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.ExpireTimeSpan = TimeSpan.FromHours(1);
         options.SlidingExpiration = true;
-        options.LoginPath = "/login"; // Path to the login page
-        options.LogoutPath = "/logout"; // Optional: Path to logout
-        options.AccessDeniedPath = "/access-denied"; // Optional: Path for access denied
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
+        options.AccessDeniedPath = "/access-denied";
     });
 
 // Add controllers for APIs
 builder.Services.AddControllers().AddNewtonsoftJson();
-
-builder.Services.AddSingleton<EventService>();
 
 // Configure Kestrel to allow large file uploads
 builder.WebHost.ConfigureKestrel(options =>
@@ -68,7 +67,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers(); // Map API controllers here, after middleware is set up
+app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KalastusWebsite.Models
 {
-    public class Vote : BaseVote
+    public class MediaVote : BaseVote
     {
         public int MediaId { get; set; }
         [ForeignKey(nameof(MediaId))]
