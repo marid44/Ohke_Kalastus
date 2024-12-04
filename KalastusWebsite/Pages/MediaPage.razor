@@ -226,8 +226,7 @@
         margin-bottom: 20px;
     }
 
-    @@keyframes
-    spin {
+    @@keyframes spin {
         0% {
             transform: rotate(0deg);
         }
@@ -264,7 +263,6 @@
                     <label class="custom-file-label" for="fileInput">Valitse tiedosto</label>
                     <InputFile id="fileInput" OnChange="HandleFileSelected" accept="image/*,video/mp4" />
                 </div>
-
 
                 <button type="submit" class="btn btn-primary" disabled="@(!CanUpload)">Lataa</button>
             </EditForm>
@@ -334,10 +332,7 @@
 }
 else
 {
-    UserSession.RedirectUrl = "/add-media";
-    <!-- Tallenna tämän sivun osoite uudelleenohjausta varten -->
-    NavigationManager.NavigateTo("/login");
-    <!-- Ohjaa kirjautumissivulle -->
+    <p class="alert alert-danger">Sinun täytyy kirjautua sisään käyttääksesi tätä toimintoa.</p>
 }
 
 @code {
@@ -358,19 +353,22 @@ else
         try
         {
             isLoading = true;
-            StateHasChanged();
 
-            // Verify session first
+            // Lataa käyttäjän istunto
+            if (!UserSession.IsLoaded)
+            {
+                await UserSession.LoadSession();
+            }
+
             if (!UserSession.IsLoggedIn)
             {
-                UserSession.RedirectUrl = "/add-media";
-                NavigationManager.NavigateTo("/login");
+                ErrorMessage = "Sinun täytyy kirjautua sisään käyttääksesi tätä toimintoa.";
                 return;
             }
 
             isSessionVerified = true;
 
-            // Load data only if logged in
+            // Lataa mediatiedot vain, jos käyttäjä on kirjautunut sisään
             mediaFiles = await DbContext.MediaFiles
             .Include(m => m.Comments)
             .ToListAsync();
@@ -387,10 +385,8 @@ else
         finally
         {
             isLoading = false;
-            StateHasChanged();
         }
     }
-
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -412,7 +408,6 @@ else
         if (!isSessionVerified || selectedFile == null || mediaFiles.Count >= 20) return;
 
         isUploading = true;
-        StateHasChanged();
 
         try
         {
@@ -451,6 +446,7 @@ else
         finally
         {
             isUploading = false;
+            // Päivitä vain media-galleria ilman komponentin uudelleenlatausta
             StateHasChanged();
         }
     }
