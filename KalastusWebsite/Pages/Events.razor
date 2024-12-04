@@ -4,28 +4,27 @@
 @inject KalastusWebsite.Services.UserSession UserSession
 
 
+<link href="css/event.css" rel="stylesheet">
+
+
 <h1>Tapahtumat</h1>
 
-<div>
+<form class="add-event-form">
     @if (UserSession.IsLoggedIn)
     {
-    <h3>Luo uusi tapahtuma</h3>
-    <input @bind="NewEventTitle" placeholder="Otsikko" />
-    <input type="date" @bind="NewEventDate" />
-    <p></p>
-    <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
-    <p></p>
-    <button @onclick="AddEvent">Lisää</button>
+        <h3>Luo uusi tapahtuma</h3>
+        <input @bind="NewEventTitle" placeholder="Otsikko" />
+        <input type="date" @bind="NewEventDate" />
+        <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
+        <button @onclick="AddEvent">Lisää</button>
     }
     else
     {
         <p>Kirjaudu sisään, jotta voit lisätä tapahtumia.</p>
     }
-</div>
+</form>
 
-<hr />
-
-<div>
+<div class="event-list-container">
     <h3>Kaikki tapahtumat</h3>
     @if (events != null && events.Any())
     {
@@ -34,7 +33,7 @@
             {
                 <li>
                     <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
-                    @ev.Description<br />
+                    <p>@ev.Description</p>
                     <em>Luonut: @ev.CreatedBy</em>
                     @if (ev.CreatedBy == UserSession.Username)
                     {
@@ -69,9 +68,15 @@
     private async Task AddEvent()
     {
         if (!UserSession.IsLoggedIn)
+
+        {
+            Console.WriteLine("Vain kirjautuneet käyttäjät voivat lisätä tapahtumia!");
+
             return;
 
+
         var newEvent = new Event
+
             {
                 Title = NewEventTitle,
                 Date = NewEventDate,
@@ -89,7 +94,9 @@
 
     private async Task RemoveEvent(int id)
     {
+
         await EventService.RemoveEventAsync(id, UserSession.Username);
         await LoadEvents();
+
     }
 }
