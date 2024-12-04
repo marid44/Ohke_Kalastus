@@ -6,6 +6,8 @@
 @inject UserSession UserSession
 @inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
+@inject KalastusWebsite.Services.EventService EventService
+@inject EventService EventService
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
 
@@ -95,6 +97,33 @@
     </div>
 </div>
 
+<div class="upcoming-events-carousel">
+    <h3>Tulevat tapahtumat</h3>
+    @if (upcomingEvents != null && upcomingEvents.Any())
+    {
+        <div class="event-display">
+            <div class="event-box">
+                <h4>@upcomingEvents[currentEventIndex].Title</h4>
+                <p class="event-date">@upcomingEvents[currentEventIndex].Date.ToString("dd.MM.yyyy")</p>
+                <p class="event-desc">@upcomingEvents[currentEventIndex].Description</p>
+                <small>Järjestäjä: @upcomingEvents[currentEventIndex].CreatedBy</small>
+            </div>
+            <div class="carousel-indicators">
+                @for (int i = 0; i < upcomingEvents.Count; i++)
+                {
+                    var index = i;
+                    <span class="indicator @(index == currentEventIndex ? "active" : "")"
+                          @onclick="() => SetCurrentEvent(index)"></span>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>Ei tulevia tapahtumia seuraavan 90 päivän aikana.</p>
+    }
+</div>
+
 <div class="recent-media">
     <h3>Suosituimmat Kuvat</h3>
     <div class="media-carousel">
@@ -137,6 +166,10 @@
 @code {
     private List<Conversation> latestConversations;
     private List<ConversationWithVotes> popularConversations;
+
+    private List<Event> upcomingEvents;
+    private int currentEventIndex = 0;
+    private System.Threading.Timer carouselTimer;
 
     private class ConversationWithVotes : Conversation
     {
@@ -195,6 +228,40 @@
         {
             errorMessage = $"Virhe: {ex.Message}";
         }
+
+        await base.OnInitializedAsync();
+        upcomingEvents = await EventService.GetUpcomingEventsAsync();
+
+        if (upcomingEvents != null && upcomingEvents.Any())
+        {
+            StartCarousel();
+        }
+
+    }
+
+    private void StartCarousel()
+    {
+        carouselTimer = new System.Threading.Timer(
+            async _ =>
+            {
+                currentEventIndex = (currentEventIndex + 1) % upcomingEvents.Count;
+                await InvokeAsync(StateHasChanged);
+            },
+            null,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(5)
+        );
+    }
+
+    private void SetCurrentEvent(int index)
+    {
+        currentEventIndex = index;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        carouselTimer?.Dispose();
     }
 
     private async Task WaitForSession()
@@ -756,4 +823,49 @@
         /* Blue for browse */
         color: white;
     }
+
+    .upcoming-events-carousel {
+        margin: 20px auto;
+        padding: 20px;
+        max-width: 800px;
+    }
+
+    .event-display {
+        position: relative;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .carousel-indicators {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ddd;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .indicator.active {
+        background-color: #007bff;
+    }
+
+    .event-date {
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    .event-desc {
+        margin: 10px 0;
+    }
+
+
 </style>

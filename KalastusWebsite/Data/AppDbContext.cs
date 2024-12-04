@@ -16,7 +16,6 @@ namespace KalastusWebsite.Data
         public DbSet<MediaComment> MediaComments { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Comment> Comments { get; set; }
-
         public DbSet<Event> Events { get; set; }
 
         public DbSet<ConversationVote> ConversationVotes { get; set; }
