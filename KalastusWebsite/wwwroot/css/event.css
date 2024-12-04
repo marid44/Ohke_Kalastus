@@ -124,20 +124,3 @@ div.event-list-container ul li button:hover {
     transform: scale(1.05);
 }
 
-/* Responsiivisuus */
-@media (max-width: 768px) {
-    form.add-event-form input,
-    form.add-event-form textarea,
-    form.add-event-form button {
-        font-size: 0.9em;
-        padding: 8px;
-    }
-
-    div.event-list-container ul li {
-        padding: 10px;
-    }
-
-    div.event-list-container ul li strong {
-        font-size: 1em;
-    }
-}
