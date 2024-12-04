@@ -1,19 +1,26 @@
 @page "/events"
+@using KalastusWebsite.Models
 @inject KalastusWebsite.Services.EventService EventService
 @inject KalastusWebsite.Services.UserSession UserSession
 
+
+
 <link href="css/event.css" rel="stylesheet">
+
+
 
 <h1>Tapahtumat</h1>
 
-<form class="add-event-form">
+<form class="add-event-form" @onsubmit="HandleSubmit">
     @if (UserSession.IsLoggedIn)
     {
         <h3>Luo uusi tapahtuma</h3>
-        <input @bind="NewEventTitle" placeholder="Otsikko" />
-        <input type="date" @bind="NewEventDate" />
-        <textarea @bind="NewEventDescription" placeholder="Kuvaus"></textarea>
-        <button @onclick="AddEvent">Lisää</button>
+        <input @bind="NewEventTitle" placeholder="Otsikko" required />
+        <input type="date" @bind="NewEventDate" required />
+        <p></p>
+        <textarea @bind="NewEventDescription" placeholder="Kuvaus" required></textarea>
+        <p></p>
+        <button type="submit">Lisää</button>
     }
     else
     {
@@ -21,16 +28,18 @@
     }
 </form>
 
+<hr />
+
 <div class="event-list-container">
     <h3>Kaikki tapahtumat</h3>
-    @if (EventService.GetEvents().Any())
+    @if (events != null && events.Any())
     {
         <ul>
-            @foreach (var ev in EventService.GetEvents())
+            @foreach (var ev in events)
             {
                 <li>
                     <strong>@ev.Title</strong> (@ev.Date.ToShortDateString())<br />
-                    <p>@ev.Description</p>
+                    @ev.Description<br />
                     <em>Luonut: @ev.CreatedBy</em>
                     @if (ev.CreatedBy == UserSession.Username)
                     {
@@ -50,16 +59,29 @@
     private string NewEventTitle = string.Empty;
     private DateTime NewEventDate = DateTime.Now;
     private string NewEventDescription = string.Empty;
+    private List<Event> events;
 
-    private void AddEvent()
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+    }
+
+    private async Task LoadEvents()
+    {
+        events = await EventService.GetEventsAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        await AddEvent();
+    }
+
+    private async Task AddEvent()
     {
         if (!UserSession.IsLoggedIn)
-        {
-            Console.WriteLine("Vain kirjautuneet käyttäjät voivat lisätä tapahtumia!");
             return;
-        }
 
-        var newEvent = new KalastusWebsite.Models.Event
+        var newEvent = new Event
             {
                 Title = NewEventTitle,
                 Date = NewEventDate,
@@ -67,21 +89,17 @@
                 CreatedBy = UserSession.Username
             };
 
-        EventService.AddEvent(newEvent);
+        await EventService.AddEventAsync(newEvent);
+        await LoadEvents();
 
         NewEventTitle = string.Empty;
         NewEventDate = DateTime.Now;
         NewEventDescription = string.Empty;
     }
 
-    private void RemoveEvent(int id)
+    private async Task RemoveEvent(int id)
     {
-        if (!UserSession.IsLoggedIn)
-        {
-            Console.WriteLine("Vain kirjautuneet käyttäjät voivat poistaa tapahtumia!");
-            return;
-        }
-
-        EventService.RemoveEvent(id, UserSession.Username);
+        await EventService.RemoveEventAsync(id, UserSession.Username);
+        await LoadEvents();
     }
 }

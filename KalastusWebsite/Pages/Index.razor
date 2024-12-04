@@ -6,6 +6,8 @@
 @inject UserSession UserSession
 @inject NavigationManager NavigationManager
 @using Microsoft.EntityFrameworkCore
+@inject KalastusWebsite.Services.EventService EventService
+@inject EventService EventService
 
 <PageTitle>Kalastajien Yhteisö</PageTitle>
 
@@ -22,8 +24,9 @@
 </div>
 
 <div class="main-container">
+    
     <div class="left-section">
-        <div class="welcome-message">
+         <div class="welcome-message">
             @if (UserSession.IsLoggedIn)
             {
                 <h2>Terve, @UserSession.Username!</h2>
@@ -83,7 +86,7 @@
                         <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
                             <h4>@conversation.Title</h4>
                             <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
-                            <p>👍 @conversation.VoteCount ääntä</p>
+                            <p>👍 @conversation.VoteCount tykkäystä</p>
                         </div>
                     }
                 }
@@ -102,40 +105,62 @@
     </div>
 </div>
 
-
-<div class="recent-media">
-    <h3>Uusimmat Kuvat</h3>
-    <div class="media-carousel">
-        <button @onclick="MoveBackward" class="carousel-arrow left-arrow">⬅</button>
-        <div class="media-items">
-            @if (recentMediaFiles?.Any() ?? false)
-            {
-                @foreach (var media in visibleMediaFiles)
-                {
-                    <div class="media-box">
-                        <a href="/image/@media.Id">
-                            <img src="@media.FilePath" alt="Recent media" class="media-image" />
-                        </a>
-                        <p>
-                            <small>
-                                Lähettänyt:
-                                <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
-                            </small>
-                        </p>
-                    </div>
-                }
-            }
-            else
-            {
-                <p>Ei uusia kuvia saatavilla.</p>
-            }
-        </div>
-        <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
+<div class="main-layout">
+    <!-- Tulevat tapahtumat -->
+    <div class="content-section">
+        <h3>Tulevat tapahtumat</h3>
+        @if (upcomingEvents != null && upcomingEvents.Any())
+        {
+            <div class="event-box">
+                <h4>@upcomingEvents[currentEventIndex].Title</h4>
+                <p class="event-date">@upcomingEvents[currentEventIndex].Date.ToString("dd.MM.yyyy")</p>
+                <p class="event-desc">@upcomingEvents[currentEventIndex].Description</p>
+                <small>Järjestäjä: @upcomingEvents[currentEventIndex].CreatedBy</small>
+            </div>
+        }
+        else
+        {
+            <p>Ei tulevia tapahtumia seuraavan 90 päivän aikana.</p>
+        }
     </div>
 
-    <div class="media-buttons">
-        <button class="btn-media" @onclick="NavigateToMedia">+ Lisää mediaa</button>
-        <button class="btn-gallery" @onclick="NavigateToMediaGallery">Kaikki kuvat</button>
+    <!-- Suosituimmat kuvat -->
+    <div class="content-section">
+        <h3>Suosituimmat Kuvat</h3>
+        <div class="media-carousel">
+            <button @onclick="MoveBackward" class="carousel-arrow left-arrow">⬅</button>
+            <div class="media-items">
+                @if (popularMediaFiles?.Any() ?? false)
+                {
+                    @foreach (var media in visibleMediaFiles)
+                    {
+                        <div class="media-box">
+                            <a href="/image/@media.Id">
+                                <img src="@media.FilePath" alt="Popular media" class="media-image" />
+                            </a>
+                            <p>
+                                <small>
+                                    Lähettänyt:
+                                    <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
+                                </small>
+                            </p>
+                            <p>👍 @media.Votes.Count(v => v.IsUpVote) tykkäystä</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Ei suosittuja kuvia saatavilla.</p>
+                }
+            </div>
+            <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
+        </div>
+
+        <!-- Painikkeet -->
+        <div class="media-buttons">
+            <button class="btn-media" @onclick="NavigateToMedia">+ Lisää mediaa</button>
+            <button class="btn-gallery" @onclick="NavigateToMediaGallery">Kaikki kuvat</button>
+        </div>
     </div>
 </div>
 
@@ -145,13 +170,17 @@
     private List<Conversation> latestConversations;
     private List<ConversationWithVotes> popularConversations;
 
+    private List<Event> upcomingEvents;
+    private int currentEventIndex = 0;
+    private System.Threading.Timer carouselTimer;
+
     private class ConversationWithVotes : Conversation
     {
         public int VoteCount { get; set; }
     }
 
 
-    private List<Media> recentMediaFiles;
+    private List<Media> popularMediaFiles = new();
     private List<Media> visibleMediaFiles = new(); // Tracks three currently visible images
     private int currentIndex = 0; // Tracks the start index of the visible images
     private string errorMessage;
@@ -163,19 +192,22 @@
         {
             await WaitForSession();
 
+            // Fetch popular media from last 30 days
+            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+            popularMediaFiles = await _context.MediaFiles
+                .Include(m => m.Votes)
+                .Where(m => m.UploadedAt >= thirtyDaysAgo)
+                .OrderByDescending(m => m.Votes.Count(v => v.IsUpVote))
+                .Take(5)
+                .ToListAsync();
+
             // Fetch latest conversations
             latestConversations = await _context.Conversations
                 .OrderByDescending(c => c.CreatedAt)
                 .Take(5)
                 .ToListAsync();
 
-            recentMediaFiles = await _context.MediaFiles
-            .OrderByDescending(m => m.UploadedAt)
-            .Take(5)
-            .ToListAsync();
-
             // Fetch popular conversations
-            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
             popularConversations = await _context.Conversations
                 .Where(c => c.CreatedAt >= thirtyDaysAgo)
                 .Select(c => new ConversationWithVotes
@@ -199,6 +231,40 @@
         {
             errorMessage = $"Virhe: {ex.Message}";
         }
+
+        await base.OnInitializedAsync();
+        upcomingEvents = await EventService.GetUpcomingEventsAsync();
+
+        if (upcomingEvents != null && upcomingEvents.Any())
+        {
+            StartCarousel();
+        }
+
+    }
+
+    private void StartCarousel()
+    {
+        carouselTimer = new System.Threading.Timer(
+            async _ =>
+            {
+                currentEventIndex = (currentEventIndex + 1) % upcomingEvents.Count;
+                await InvokeAsync(StateHasChanged);
+            },
+            null,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(5)
+        );
+    }
+
+    private void SetCurrentEvent(int index)
+    {
+        currentEventIndex = index;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        carouselTimer?.Dispose();
     }
 
     private async Task WaitForSession()
@@ -213,39 +279,38 @@
 
     private void MoveForward()
     {
-        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        if (popularMediaFiles != null && popularMediaFiles.Count > 3)
         {
             // Increment the index and loop back
-            currentIndex = (currentIndex + 1) % recentMediaFiles.Count;
+            currentIndex = (currentIndex + 1) % popularMediaFiles.Count;
             UpdateVisibleMedia();
         }
     }
 
     private void MoveBackward()
     {
-        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        if (popularMediaFiles != null && popularMediaFiles.Count > 3)
         {
             // Decrement the index and loop back
-            currentIndex = (currentIndex - 1 + recentMediaFiles.Count) % recentMediaFiles.Count;
+            currentIndex = (currentIndex - 1 + popularMediaFiles.Count) % popularMediaFiles.Count;
             UpdateVisibleMedia();
         }
     }
 
     private void UpdateVisibleMedia()
     {
-        if (recentMediaFiles.Count >= 3)
+        if (popularMediaFiles.Count >= 3)
         {
             visibleMediaFiles = new List<Media>
             {
-                recentMediaFiles[currentIndex],
-                recentMediaFiles[(currentIndex + 1) % recentMediaFiles.Count],
-                recentMediaFiles[(currentIndex + 2) % recentMediaFiles.Count]
+                popularMediaFiles[currentIndex],
+                popularMediaFiles[(currentIndex + 1) % popularMediaFiles.Count],
+                popularMediaFiles[(currentIndex + 2) % popularMediaFiles.Count]
             };
         }
         else
         {
-            // If fewer than 3 media files, display all available files
-            visibleMediaFiles = recentMediaFiles.ToList();
+            visibleMediaFiles = popularMediaFiles.ToList();
         }
     }
 
@@ -302,4 +367,3 @@
         NavigationManager.NavigateTo("/events");
     }
 }
-
