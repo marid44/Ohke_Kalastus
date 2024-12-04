@@ -22,6 +22,12 @@
     private Dictionary<int, bool?> commentVotes = new();
     private bool isVoting = false;
 
+    private bool IsCommentUpVoted(int id) =>
+    commentVotes.TryGetValue(id, out var vote) && vote == true;
+
+    private bool IsCommentDownVoted(int id) =>
+    commentVotes.TryGetValue(id, out var vote) && vote == false;
+
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
@@ -121,6 +127,58 @@
         }
     }
 
+    private int GetCommentVoteCount(int commentId, bool isUpVote)
+    {
+        return _context.CommentVotes
+        .Count(v => v.CommentId == commentId && v.IsUpVote == isUpVote);
+    }
+
+    private async Task ToggleCommentVote(int commentId, bool isUpVote)
+    {
+        if (!UserSession.IsLoggedIn || isVoting) return;
+        isVoting = true;
+
+        try
+        {
+            var vote = await _context.CommentVotes
+            .FirstOrDefaultAsync(v => v.CommentId == commentId &&
+            v.UserId == UserSession.UserId.ToString());
+
+            if (vote != null)
+            {
+                if (vote.IsUpVote == isUpVote)
+                {
+                    _context.CommentVotes.Remove(vote);
+                    commentVotes[commentId] = null;
+                }
+                else
+                {
+                    vote.IsUpVote = isUpVote;
+                    _context.CommentVotes.Update(vote);
+                    commentVotes[commentId] = isUpVote;
+                }
+            }
+            else
+            {
+                var newVote = new CommentVote
+                    {
+                        CommentId = commentId,
+                        UserId = UserSession.UserId.ToString(),
+                        IsUpVote = isUpVote
+                    };
+                _context.CommentVotes.Add(newVote);
+                commentVotes[commentId] = isUpVote;
+            }
+
+            await _context.SaveChangesAsync();
+            StateHasChanged();
+        }
+        finally
+        {
+            isVoting = false;
+        }
+    }
+
     private async Task AddComment()
     {
         if (string.IsNullOrWhiteSpace(newCommentText))
@@ -197,6 +255,19 @@
                     <div class="comment">
                         <p><strong>@comment.Username</strong> - <small>@comment.CreatedAt</small></p>
                         <p>@comment.Text</p>
+                        @if (UserSession.IsLoggedIn)
+                        {
+                            <div class="vote-buttons">
+                                <button @onclick="() => ToggleCommentVote(comment.Id, true)"
+                                    class="vote-button @(IsCommentUpVoted(comment.Id) ? "active upvote" : "upvote")">
+                                    👍 @GetCommentVoteCount(comment.Id, true)
+                                </button>
+                                <button @onclick="() => ToggleCommentVote(comment.Id, false)"
+                                    class="vote-button @(IsCommentDownVoted(comment.Id) ? "active downvote" : "downvote")">
+                                    👎 @GetCommentVoteCount(comment.Id, false)
+                                </button>
+                            </div>
+                        }
                     </div>
                 }
             </div>
