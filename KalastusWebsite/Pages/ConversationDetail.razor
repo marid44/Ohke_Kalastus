@@ -124,6 +124,10 @@ else
         border-radius: 8px;
         max-width: 600px;
         margin: 20px auto;
+        overflow: hidden;
+        /* Prevents overflow */
+        word-wrap: break-word;
+        /* Ensures long words break onto the next line */
     }
 
     .comments-section {
@@ -136,5 +140,59 @@ else
         border: 1px solid #ddd;
         border-radius: 5px;
         margin-bottom: 10px;
+        overflow: hidden;
+        /* Prevents overflow */
+        word-wrap: break-word;
+        /* Ensures long words break onto the next line */
+    }
+
+    .comment p {
+        margin: 5px 0;
+        overflow: hidden;
+        /* Prevents overflow */
+        text-overflow: ellipsis;
+        /* Adds ellipsis if text is too long */
+        white-space: normal;
+        /* Allows multiline content */
+        word-wrap: break-word;
+        /* Ensures long words break onto the next line */
+    }
+
+    .comment strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        /* Keeps username on a single line */
+        display: inline-block;
+        max-width: 100%;
+        /* Ensures it doesn’t overflow */
+    }
+
+    .comment small {
+        color: #999;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    textarea#newComment {
+        width: 100%;
+        resize: none;
+        /* Prevents resizing of the text area */
+        overflow: hidden;
+        word-wrap: break-word;
+        height: 100px;
+        /* Set a fixed height for consistency */
+    }
+
+    button.btn {
+        margin-top: 10px;
+    }
+
+    p {
+        word-wrap: break-word;
+        /* Ensures long text doesn't break layout */
     }
 </style>

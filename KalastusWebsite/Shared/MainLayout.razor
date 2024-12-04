@@ -18,7 +18,9 @@
             {
                 <button class="btn btn-link" @onclick="NavigateToRegister">Rekisteröidy</button>
                 <button class="btn btn-link" @onclick="NavigateToLogin">Kirjaudu</button>
+                
             }
+            <button class="toggle-sidebar-btn" @onclick="ToggleSidebar">☰</button>
         </div>
 
         <article class="content px-4">
@@ -26,7 +28,7 @@
         </article>
     </main>
 
-    <div class="sidebar">
+    <div class="sidebar" style="@(isSidebarVisible ? "display: block;" : "display: none;")">
         <NavMenu />
     </div>
 </div>
@@ -34,24 +36,41 @@
 @code {
     [Inject] private NavigationManager NavigationManager { get; set; }
 
-    // Method to navigate to the Home/Index page
+    private bool isSidebarVisible = false; // Tracks whether the sidebar is visible
+
+    // Toggles the visibility of the sidebar
+    private void ToggleSidebar()
+    {
+        isSidebarVisible = !isSidebarVisible;
+    }
+
     private void NavigateToHome()
     {
         NavigationManager.NavigateTo("/");
     }
 
+    private bool firstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (this.firstRender)
+        {
+            this.firstRender = false;
+            await UserSession.LoadSession();
+            StateHasChanged();
+        }
+    }
+
     private async Task Logout()
     {
-        // Clear the user session
-        UserSession.Username = string.Empty;
-        UserSession.UserId = 0; // Reset UserId
-        UserSession.IsLoggedIn = false;
-
-        // Clear the map and marker count using JavaScript
+        // First clear map and markers
         await JSRuntime.InvokeVoidAsync("clearMap");
         await JSRuntime.InvokeVoidAsync("resetMarkerCount");
 
-        // Redirect to the home page
+        // Then clear the session
+        await UserSession.ClearSession();
+
+        // Finally redirect
         NavigationManager.NavigateTo("/", forceLoad: true);
     }
 

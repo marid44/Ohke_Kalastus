@@ -15,7 +15,7 @@
         {
             <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
                 <h4>@conversation.Title</h4>
-                <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt</small></p>
+                <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
                 <p>@(conversation.Content.Length > 100 ? conversation.Content.Substring(0, 100) + "..." : conversation.Content)
                 </p>
             </div>

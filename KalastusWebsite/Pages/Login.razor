@@ -183,26 +183,21 @@
 
     private async Task HandleLogin()
     {
-        // Check if the user exists in the database
         var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
         if (user == null)
         {
-            // User not found, show an error message
             loginError = "Sinun täytyy rekisteröityä ensin.";
         }
         else if (BCrypt.Net.BCrypt.Verify(loginModel.Password, user.Password))
         {
-            // User found, and password matches
             loginError = null;
-
-            // Save the user session
-            UserSession.UserId = user.Id; // Set the UserId here
+            UserSession.UserId = user.Id;
             UserSession.Username = user.Username;
             UserSession.IsLoggedIn = true;
+            await UserSession.PersistSession(); // Save to localStorage
 
-            // Redirect the user
             if (!string.IsNullOrEmpty(UserSession.RedirectUrl))
             {
                 NavigationManager.NavigateTo(UserSession.RedirectUrl);
@@ -215,7 +210,6 @@
         }
         else
         {
-            // Password doesn't match
             loginError = "Virheellinen sähköposti tai salasana.";
         }
     }
