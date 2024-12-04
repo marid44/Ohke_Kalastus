@@ -76,7 +76,7 @@
                         <div class="conversation-box" @onclick="() => NavigateToConversation(conversation.Id)">
                             <h4>@conversation.Title</h4>
                             <p><small>Lähettäjä @conversation.Username @conversation.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small></p>
-                            <p>👍 @conversation.VoteCount ääntä</p>
+                            <p>👍 @conversation.VoteCount tykkäystä</p>
                         </div>
                     }
                 }
@@ -95,19 +95,18 @@
     </div>
 </div>
 
-
 <div class="recent-media">
-    <h3>Uusimmat Kuvat</h3>
+    <h3>Suosituimmat Kuvat</h3>
     <div class="media-carousel">
         <button @onclick="MoveBackward" class="carousel-arrow left-arrow">⬅</button>
         <div class="media-items">
-            @if (recentMediaFiles?.Any() ?? false)
+            @if (popularMediaFiles?.Any() ?? false)
             {
                 @foreach (var media in visibleMediaFiles)
                 {
                     <div class="media-box">
                         <a href="/image/@media.Id">
-                            <img src="@media.FilePath" alt="Recent media" class="media-image" />
+                            <img src="@media.FilePath" alt="Popular media" class="media-image" />
                         </a>
                         <p>
                             <small>
@@ -115,12 +114,13 @@
                                 <a href="/profile/@media.UploadedBy">@media.UploadedBy</a>
                             </small>
                         </p>
+                        <p>👍 @media.Votes.Count(v => v.IsUpVote) tykkäystä</p>
                     </div>
                 }
             }
             else
             {
-                <p>Ei uusia kuvia saatavilla.</p>
+                <p>Ei suosittuja kuvia saatavilla.</p>
             }
         </div>
         <button @onclick="MoveForward" class="carousel-arrow right-arrow">➡</button>
@@ -144,7 +144,7 @@
     }
 
 
-    private List<Media> recentMediaFiles;
+    private List<Media> popularMediaFiles = new();
     private List<Media> visibleMediaFiles = new(); // Tracks three currently visible images
     private int currentIndex = 0; // Tracks the start index of the visible images
     private string errorMessage;
@@ -156,19 +156,22 @@
         {
             await WaitForSession();
 
+            // Fetch popular media from last 30 days
+            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+            popularMediaFiles = await _context.MediaFiles
+                .Include(m => m.Votes)
+                .Where(m => m.UploadedAt >= thirtyDaysAgo)
+                .OrderByDescending(m => m.Votes.Count(v => v.IsUpVote))
+                .Take(5)
+                .ToListAsync();
+
             // Fetch latest conversations
             latestConversations = await _context.Conversations
                 .OrderByDescending(c => c.CreatedAt)
                 .Take(5)
                 .ToListAsync();
 
-            recentMediaFiles = await _context.MediaFiles
-            .OrderByDescending(m => m.UploadedAt)
-            .Take(5)
-            .ToListAsync();
-
             // Fetch popular conversations
-            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
             popularConversations = await _context.Conversations
                 .Where(c => c.CreatedAt >= thirtyDaysAgo)
                 .Select(c => new ConversationWithVotes
@@ -206,39 +209,38 @@
 
     private void MoveForward()
     {
-        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        if (popularMediaFiles != null && popularMediaFiles.Count > 3)
         {
             // Increment the index and loop back
-            currentIndex = (currentIndex + 1) % recentMediaFiles.Count;
+            currentIndex = (currentIndex + 1) % popularMediaFiles.Count;
             UpdateVisibleMedia();
         }
     }
 
     private void MoveBackward()
     {
-        if (recentMediaFiles != null && recentMediaFiles.Count > 3)
+        if (popularMediaFiles != null && popularMediaFiles.Count > 3)
         {
             // Decrement the index and loop back
-            currentIndex = (currentIndex - 1 + recentMediaFiles.Count) % recentMediaFiles.Count;
+            currentIndex = (currentIndex - 1 + popularMediaFiles.Count) % popularMediaFiles.Count;
             UpdateVisibleMedia();
         }
     }
 
     private void UpdateVisibleMedia()
     {
-        if (recentMediaFiles.Count >= 3)
+        if (popularMediaFiles.Count >= 3)
         {
             visibleMediaFiles = new List<Media>
             {
-                recentMediaFiles[currentIndex],
-                recentMediaFiles[(currentIndex + 1) % recentMediaFiles.Count],
-                recentMediaFiles[(currentIndex + 2) % recentMediaFiles.Count]
+                popularMediaFiles[currentIndex],
+                popularMediaFiles[(currentIndex + 1) % popularMediaFiles.Count],
+                popularMediaFiles[(currentIndex + 2) % popularMediaFiles.Count]
             };
         }
         else
         {
-            // If fewer than 3 media files, display all available files
-            visibleMediaFiles = recentMediaFiles.ToList();
+            visibleMediaFiles = popularMediaFiles.ToList();
         }
     }
 
